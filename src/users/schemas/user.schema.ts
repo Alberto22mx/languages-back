@@ -1,115 +1,119 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import {
-    IsEmail,
-    IsNotEmpty,
-    MinLength,
-    IsDate,
-    IsEnum,
-    Matches,
-    IsString,
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  IsDate,
+  IsEnum,
+  Matches,
+  IsString,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { v4 as uuidv4 } from 'uuid';
 
 export type UserDocument = User & Document;
 
 enum UserType {
-    ADMIN = 'admin',
-    USER = 'user',
-    TEACHER = 'teacher',
+  ADMIN = 'admin',
+  USER = 'user',
+  TEACHER = 'teacher',
 }
 
+// enum CustomUser {
+//     ADMIN = 'admin',
+//     USER = 'user',
+//     TEACHER = 'teacher',
+// }
+
 @Schema({
-    timestamps: true,
-    strict: true,
-    toJSON: {
-        virtuals: true,
-        transform: function(doc, ret) {
-            delete ret._id;
-            delete ret.__v;
-            delete ret.password; // No enviar password en respuestas
-            return ret;
-        }
-    }
+  timestamps: true,
+  strict: true,
+  toJSON: {
+    virtuals: true,
+    transform: function (doc, ret) {
+      delete ret._id;
+      delete ret.__v;
+      delete ret.password;
+      return ret;
+    },
+  },
 })
 export class User {
-    @IsNotEmpty({ message: 'El nombre es requerido' })
-    @IsString()
-    @Prop({ required: true, trim: true })
-    first_name: string;
+  @Prop({ default: uuidv4, immutable: true })
+  id: string;
 
-    @IsNotEmpty({ message: 'El apellido paterno es requerido' })
-    @IsString()
-    @Prop({ required: true, trim: true })
-    last_name_father: string;
+  @IsNotEmpty({ message: 'El nombre es requerido' })
+  @IsString()
+  @Prop({ required: true, trim: true })
+  firstName: string;
 
-    @IsNotEmpty({ message: 'El apellido materno es requerido' })
-    @IsString()
-    @Prop({ required: true, trim: true })
-    last_name_mother: string;
+  @IsNotEmpty({ message: 'El apellido paterno es requerido' })
+  @IsString()
+  @Prop({ required: true, trim: true })
+  lastNameFather: string;
 
-    @IsNotEmpty()
-    @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
-    @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-        message: 'La contraseña debe contener mayúsculas, minúsculas y números'
-    })
-    @Prop({ required: true })
-    password: string;
+  @IsNotEmpty({ message: 'El apellido materno es requerido' })
+  @IsString()
+  @Prop({ required: true, trim: true })
+  lastNameMother: string;
 
-    @IsNotEmpty()
-    @Prop({ required: true, unique: true })
-    registration_number: string;
+  @IsNotEmpty()
+  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message: 'La contraseña debe contener mayúsculas, minúsculas y números',
+  })
+  @Prop({ required: true })
+  password: string;
 
-    @IsNotEmpty()
-    @Matches(/^\+?[1-9]\d{1,14}$/, {
-        message: 'Número de teléfono inválido'
-    })
-    @Prop({ required: true })
-    phone: string;
+  @IsNotEmpty()
+  @Prop({ required: true, unique: true })
+  registrationNumber: string;
 
-    @IsNotEmpty()
-    @IsEmail({}, { message: 'Email inválido' })
-    @Prop({ required: true, unique: true, lowercase: true, trim: true })
-    email: string;
+  @IsNotEmpty()
+  @Matches(/^\+?[1-9]\d{1,14}$/, {
+    message: 'Número de teléfono inválido',
+  })
+  @Prop({ required: true })
+  phone: string;
 
-    @IsNotEmpty()
-    @Transform(({ value }) => new Date(value))
-    @IsDate()
-    @Prop({ required: true })
-    birth_date: Date;
+  @IsNotEmpty()
+  @IsEmail({}, { message: 'Email inválido' })
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  email: string;
 
-    @IsNotEmpty()
-    @IsEnum(['active', 'inactive'], { message: 'Estado inválido' })
-    @Prop({ required: true, enum: ['active', 'inactive'], default: 'active' })
-    state: string;
+  @IsNotEmpty()
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  @Prop({ required: true })
+  birthDate: Date;
 
-    @IsNotEmpty()
-    @IsEnum(['yes', 'no'], { message: 'Debe aceptar los términos' })
-    @Prop({ required: true })
-    terms_accepted: string;
+  @IsNotEmpty()
+  @IsEnum(['active', 'inactive'], { message: 'Estado inválido' })
+  @Prop({ required: true, enum: ['active', 'inactive'], default: 'active' })
+  state: string;
 
-    @IsNotEmpty()
-    @IsEnum(UserType, { message: 'Tipo de usuario inválido' })
-    @Prop({ required: true, enum: UserType })
-    user_type: string;
+  @Prop()
+  termsAccepted?: boolean;
 
-    @Prop()
-    image?: string;
+  @IsNotEmpty()
+  @IsEnum(UserType, { message: 'Tipo de usuario inválido' })
+  @Prop({ required: true, enum: UserType })
+  userType: string;
 
-    @Prop({ default: Date.now })
-    creation_date: Date;
+  @Prop()
+  image?: string;
 
-    // Puedes agregar validaciones personalizadas
-    @Prop({
-        validate: {
-            validator: function(v) {
-                // Ejemplo de validación personalizada
-                return v.length > 0;
-            },
-            message: props => `${props.path} no puede estar vacío`
-        }
-    })
-    custom_field: string;
+  @IsNotEmpty({ message: 'El horario es requerido' })
+  @IsString()
+  @Prop({ required: true, trim: true })
+  custom: string;
+
+  @Prop({ default: true, index: true })
+  active: boolean;
+
+  @Prop()
+  deletedAt: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
