@@ -1,7 +1,7 @@
-export class Games {
+export class CreateExamDto {
   id: string;
   title: string;
   instructions: string;
-  progress: string;
+  active: boolean;
   image: string;
 }

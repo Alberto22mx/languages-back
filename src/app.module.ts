@@ -7,6 +7,7 @@ import { GroupsModule } from './groups/groups.module';
 import { UsersModule } from './users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
+import { ExamModule } from './exam/exam.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
     GroupsModule,
     UsersModule,
     AuthModule,
+    ExamModule,
   ],
   controllers: [AppController],
   providers: [AppService],

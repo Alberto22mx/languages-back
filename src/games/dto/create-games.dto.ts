@@ -1,7 +1,6 @@
-export class Games {
+export class CreateGamesDto {
   id: string;
   title: string;
   instructions: string;
-  progress: string;
   image: string;
 }

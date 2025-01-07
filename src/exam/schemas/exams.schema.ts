@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
 
-export type LessonsDocument = Lessons & Document;
+export type ExamsDocument = Exams & Document;
 
 @Schema({
   timestamps: true,
@@ -17,11 +17,11 @@ export type LessonsDocument = Lessons & Document;
     },
   },
 })
-export class Lessons {
+export class Exams {
   @Prop({ default: uuidv4, immutable: true })
   id: string;
 
-  @IsNotEmpty({ message: 'El título es requerido' })
+  @IsNotEmpty({ message: 'El título del examen es requerido' })
   @IsString()
   @Prop({ required: true, trim: true })
   title: string;
@@ -31,8 +31,11 @@ export class Lessons {
   @Prop({ required: true, trim: true })
   instructions: string;
 
+  @Prop({ default: false })
+  active: boolean;
+
   @Prop()
   image?: string;
 }
 
-export const LessonsSchema = SchemaFactory.createForClass(Lessons);
+export const ExamsSchema = SchemaFactory.createForClass(Exams);
