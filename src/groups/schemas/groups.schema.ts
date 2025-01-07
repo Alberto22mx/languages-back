@@ -1,7 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
+import { Games } from 'src/games/schemas/games.schema';
+import { Lessons } from 'src/lessons/schemas/lessons.schema';
+import { Exams } from 'src/exam/schemas/exams.schema';
 
 export type GroupsDocument = Groups & Document;
 
@@ -31,8 +34,30 @@ export class Groups {
   @Prop({ required: true, trim: true })
   description: string;
 
+  @IsNotEmpty({ message: 'El nivel del grupo es requerido' })
+  @IsString()
+  @Prop({ required: true, trim: true })
+  level: string;
+
+  @IsNotEmpty({ message: 'El horario del grupo es requerido' })
+  @IsString()
+  @Prop({ required: true, trim: true })
+  schedule: string;
+
+  @Prop({ default: false })
+  active: boolean;
+
   @Prop()
   image?: string;
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }] })
+  lessons: Lessons[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Game' }] })
+  games: Games[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exam' }] })
+  exams: Exams[];
 }
 
 export const GroupsSchema = SchemaFactory.createForClass(Groups);

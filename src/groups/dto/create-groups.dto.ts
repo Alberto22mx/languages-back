@@ -3,5 +3,6 @@ export class CreateGroupsDto {
   name: string;
   level: string;
   schedule: string;
+  active: string;
   image: string;
 }

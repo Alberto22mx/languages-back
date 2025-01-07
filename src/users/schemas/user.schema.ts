@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import {
   IsEmail,
   IsNotEmpty,
@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
+import { Groups } from 'src/groups/schemas/groups.schema';
 
 export type UserDocument = User & Document;
 
@@ -114,6 +115,9 @@ export class User {
 
   @Prop()
   deletedAt: Date;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Group' })
+  group: Groups;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

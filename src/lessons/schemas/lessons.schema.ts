@@ -31,6 +31,9 @@ export class Lessons {
   @Prop({ required: true, trim: true })
   instructions: string;
 
+  @Prop({ default: false })
+  active: boolean;
+
   @Prop()
   image?: string;
 }
