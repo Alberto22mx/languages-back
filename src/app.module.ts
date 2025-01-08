@@ -10,6 +10,8 @@ import { AuthModule } from './auth/auth.module';
 import { ExamModule } from './exam/exam.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { ProgressController } from './progress/progress.controller';
+import { ProgressModule } from './progress/progress.module';
 
 @Module({
   imports: [
@@ -20,8 +22,9 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
     UsersModule,
     AuthModule,
     ExamModule,
+    ProgressModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, ProgressController],
   providers: [
     AppService,
     {

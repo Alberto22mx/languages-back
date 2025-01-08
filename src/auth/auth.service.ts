@@ -29,7 +29,11 @@ export class AuthService {
       registrationNumber: user.registrationNumber,
       sub: user._id,
     };
-    return { accessToken: this.jwtService.sign(payload) };
+    return {
+      accessToken: this.jwtService.sign(payload),
+      idUser: user.id,
+      userType: user.userType,
+    };
   }
 
   // Método para encriptar una contraseña
