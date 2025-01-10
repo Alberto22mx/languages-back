@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@auth0/angular-jwt": "^5.2.0",
+    "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.3.0",
     "@nestjs/core": "^10.0.0",
@@ -34,6 +35,7 @@
     "class-validator": "^0.14.1",
     "cors": "^2.8.5",
     "mongoose": "^8.9.3",
+    "nodemailer": "^6.9.16",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.0",
@@ -48,6 +50,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.3.1",
+    "@types/nodemailer": "^6.4.17",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.0",
     "@types/uuid": "^10.0.0",

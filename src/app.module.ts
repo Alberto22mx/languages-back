@@ -12,9 +12,15 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ProgressController } from './progress/progress.controller';
 import { ProgressModule } from './progress/progress.module';
+import { MailModule } from './mail/mail.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     MongooseModule.forRoot('mongodb://localhost:27017/englishforever'),
     LessonsModule,
     GamesModule,
@@ -23,6 +29,7 @@ import { ProgressModule } from './progress/progress.module';
     AuthModule,
     ExamModule,
     ProgressModule,
+    MailModule,
   ],
   controllers: [AppController, ProgressController],
   providers: [

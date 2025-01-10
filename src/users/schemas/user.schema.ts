@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
+import { Document } from 'mongoose';
 import {
   IsEmail,
   IsNotEmpty,
@@ -11,13 +11,12 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { v4 as uuidv4 } from 'uuid';
-import { Groups } from 'src/groups/schemas/groups.schema';
 
 export type UserDocument = User & Document;
 
 enum UserType {
   ADMIN = 'admin',
-  USER = 'user',
+  STUDENT = 'student',
   TEACHER = 'teacher',
 }
 
@@ -41,6 +40,7 @@ enum UserType {
   },
 })
 export class User {
+  [x: string]: any;
   @Prop({ default: uuidv4, immutable: true })
   id: string;
 
@@ -97,6 +97,9 @@ export class User {
   @Prop()
   termsAccepted?: boolean;
 
+  @Prop()
+  course?: string;
+
   @IsNotEmpty()
   @IsEnum(UserType, { message: 'Tipo de usuario inválido' })
   @Prop({ required: true, enum: UserType })
@@ -105,19 +108,11 @@ export class User {
   @Prop()
   image?: string;
 
-  @IsNotEmpty({ message: 'El horario es requerido' })
-  @IsString()
-  @Prop({ required: true, trim: true })
-  custom: string;
-
   @Prop({ default: true, index: true })
   active: boolean;
 
   @Prop()
   deletedAt: Date;
-
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Group' })
-  group: Groups;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

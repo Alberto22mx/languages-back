@@ -1,4 +1,5 @@
 export class CreateUserDto {
+  id: string;
   firstName: string;
   lastNameFather: string;
   lastNameMother: string;
@@ -11,5 +12,5 @@ export class CreateUserDto {
   termsAccepted: string;
   userType: string;
   image: string;
-  custom: string;
+  course: string;
 }

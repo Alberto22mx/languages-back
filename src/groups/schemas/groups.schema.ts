@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Games } from 'src/games/schemas/games.schema';
 import { Lessons } from 'src/lessons/schemas/lessons.schema';
 import { Exams } from 'src/exam/schemas/exams.schema';
+import { User } from 'src/users/schemas/user.schema';
 
 export type GroupsDocument = Groups & Document;
 
@@ -50,14 +51,17 @@ export class Groups {
   @Prop()
   image?: string;
 
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exam' }] })
+  exams: Exams[];
+
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }] })
   lessons: Lessons[];
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Game' }] })
   games: Games[];
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exam' }] })
-  exams: Exams[];
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+  users: User[];
 }
 
 export const GroupsSchema = SchemaFactory.createForClass(Groups);
