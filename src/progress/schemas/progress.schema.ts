@@ -10,7 +10,7 @@ export enum ProgressType {
 }
 
 @Schema({ timestamps: true })
-export class Progress {
+export class Progress extends Document {
   @Prop({ required: true })
   userId: string;
 
@@ -21,17 +21,11 @@ export class Progress {
   })
   type: ProgressType;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, required: true })
-  referenceId: MongooseSchema.Types.ObjectId;
+  @Prop({ type: [{ type: String, ref: 'Lesson' }] })
+  referenceId: string;
 
   @Prop({ type: MongooseSchema.Types.Mixed, required: true })
   data: any;
-
-  @Prop({ default: false })
-  completed: boolean;
-
-  @Prop({ default: 0 })
-  score: number;
 }
 
 export const ProgressSchema = SchemaFactory.createForClass(Progress);

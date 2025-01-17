@@ -20,12 +20,6 @@ enum UserType {
   TEACHER = 'teacher',
 }
 
-// enum CustomUser {
-//     ADMIN = 'admin',
-//     USER = 'user',
-//     TEACHER = 'teacher',
-// }
-
 @Schema({
   timestamps: true,
   strict: true,
@@ -68,7 +62,7 @@ export class User {
   password: string;
 
   @IsNotEmpty()
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, trim: true })
   registrationNumber: string;
 
   @IsNotEmpty()
@@ -97,9 +91,6 @@ export class User {
   @Prop()
   termsAccepted?: boolean;
 
-  @Prop()
-  course?: string;
-
   @IsNotEmpty()
   @IsEnum(UserType, { message: 'Tipo de usuario inválido' })
   @Prop({ required: true, enum: UserType })
@@ -107,9 +98,6 @@ export class User {
 
   @Prop()
   image?: string;
-
-  @Prop({ default: true, index: true })
-  active: boolean;
 
   @Prop()
   deletedAt: Date;

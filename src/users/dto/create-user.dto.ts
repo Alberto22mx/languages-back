@@ -12,5 +12,4 @@ export class CreateUserDto {
   termsAccepted: string;
   userType: string;
   image: string;
-  course: string;
 }

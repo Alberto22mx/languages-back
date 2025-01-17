@@ -17,7 +17,7 @@ export type ExamsDocument = Exams & Document;
     },
   },
 })
-export class Exams {
+export class Exams extends Document {
   @Prop({ default: uuidv4, immutable: true })
   id: string;
 

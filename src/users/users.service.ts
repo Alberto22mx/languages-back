@@ -15,67 +15,75 @@ export class UsersService {
     private readonly mailService: MailService,
   ) {}
 
-  async findAll(): Promise<User[]> {
-    return this.userModel
-      .find()
-      .select(
-        'first_name last_name_father last_name_mother password registration_number phone email birth_date state terms_accepted user_type image creaction_date',
-      )
-      .exec();
+  async findAll(
+    page: number,
+    limit: number,
+  ): Promise<{ data: User[]; total: number }> {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.userModel
+        .find()
+        .select(
+          'id firstName lastNameFather lastNameMother registrationNumber phone email birthDate state termsAccepted course userType image',
+        )
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.userModel.countDocuments().exec(),
+    ]);
+    return { data, total };
   }
-
-  /*
-  async findAll(): Promise<User[]> {
-    return this.userModel
-      .find()
-      .select(
-        'first_name last_name_father last_name_mother password registration_number phone email birth_date state terms_accepted user_type image creaction_date'
-      )
-      .populate({
-        path: 'address',
-        select: 'street city state zip_code',
-        model: 'Address'
-      })
-      .populate({
-        path: 'orders',
-        select: 'order_number total amount_paid',
-        model: 'Order'
-      })
-      .exec();
-  }*/
 
   async findOne(id: string): Promise<User> {
     return this.userModel.findById(id).exec();
   }
 
+  async getActiveUsersByType(userType: string): Promise<User[]> {
+    return this.userModel.find({ userType, state: 'active' }).exec();
+  }
+
   async create(createUserDto: CreateUserDto): Promise<User> {
+    console.log(createUserDto);
     // Generamos una contraseña aleatoria si no se proporciona una
     const password = createUserDto.password || this.generateSecurePassword();
+    console.log(password);
     const hashedPassword = await this.authService.hashPassword(password);
-    // Obtener la última matrícula
-    const ultimoEstudiante = await this.userModel
-      .findOne()
-      .sort({ numeroMatricula: -1 })
-      .exec();
 
-    let nuevaMatricula = 'REG000001';
+    let nuevaMatricula = null;
 
-    if (ultimoEstudiante?.registrationNumber) {
-      // Incrementar la última matrícula
-      const ultimoNumero = parseInt(
-        ultimoEstudiante.registrationNumber.replace('REG', ''),
-        10,
-      );
-      nuevaMatricula = `REG${(ultimoNumero + 1).toString().padStart(6, '0')}`;
+    // Si el usuario tiene un tipo definido, generamos su número de registro
+    if (createUserDto.userType) {
+      // Obtenemos el último usuario del mismo tipo
+      const ultimoUsuario = await this.userModel
+        .findOne({ userType: createUserDto.userType })
+        .sort({ registrationNumber: -1 })
+        .exec();
+
+      // Convertimos el tipo de usuario a prefijo (3 primeras letras en mayúscula)
+      const prefijo = createUserDto.userType.slice(0, 3).toUpperCase();
+      nuevaMatricula = `${prefijo}000001`;
+
+      if (ultimoUsuario?.registrationNumber) {
+        // Extraemos el número del último registro
+        const numeroActual = ultimoUsuario.registrationNumber.slice(3); // Tomamos los dígitos después del prefijo
+        // Incrementamos el número
+        const siguienteNumero = parseInt(numeroActual, 10) + 1;
+        // Formateamos el nuevo número con ceros a la izquierda
+        nuevaMatricula = `${prefijo}${siguienteNumero.toString().padStart(6, '0')}`;
+      }
     }
+
     const userWithEncript = {
       ...createUserDto,
       password: hashedPassword,
       registrationNumber: nuevaMatricula,
     };
-    // to: string, subject: string, text: string
-    this.mailService.sendMail('Registro', createUserDto, password);
+    console.log(userWithEncript);
+    // Enviar correo de registro
+    this.mailService.sendMail('Registro', userWithEncript, password);
+
     const createdUser = new this.userModel(userWithEncript);
+    console.log(createdUser);
     return createdUser.save();
   }
 

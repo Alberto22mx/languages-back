@@ -1,11 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document } from 'mongoose';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { Document } from 'mongoose';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
-import { Games } from 'src/games/schemas/games.schema';
-import { Lessons } from 'src/lessons/schemas/lessons.schema';
-import { Exams } from 'src/exam/schemas/exams.schema';
-import { User } from 'src/users/schemas/user.schema';
+import { LevelGroup } from '../enums/level-group.enum';
+import { ScheduleGroup } from '../enums/schedule-group.enum';
 
 export type GroupsDocument = Groups & Document;
 
@@ -21,14 +19,14 @@ export type GroupsDocument = Groups & Document;
     },
   },
 })
-export class Groups {
+export class Groups extends Document {
   @Prop({ default: uuidv4, immutable: true })
   id: string;
 
-  @IsNotEmpty({ message: 'El nombre del grupo es requerido' })
+  @IsNotEmpty({ message: 'El nombre del grupo es requerida' })
   @IsString()
   @Prop({ required: true, trim: true })
-  name: string;
+  nameGroup: string;
 
   @IsNotEmpty({ message: 'La descripción del grupo es requerida' })
   @IsString()
@@ -37,31 +35,33 @@ export class Groups {
 
   @IsNotEmpty({ message: 'El nivel del grupo es requerido' })
   @IsString()
-  @Prop({ required: true, trim: true })
+  @Prop({ required: true, trim: true, enum: LevelGroup })
   level: string;
 
   @IsNotEmpty({ message: 'El horario del grupo es requerido' })
   @IsString()
-  @Prop({ required: true, trim: true })
+  @Prop({ required: true, trim: true, enum: ScheduleGroup })
   schedule: string;
 
-  @Prop({ default: false })
-  active: boolean;
+  @IsNotEmpty()
+  @IsEnum(['active', 'inactive'], { message: 'Estado inválido' })
+  @Prop({ required: true, enum: ['active', 'inactive'], default: 'active' })
+  state: string;
 
   @Prop()
   image?: string;
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Exam' }] })
-  exams: Exams[];
+  @Prop({ type: [{ type: String, ref: 'Exam' }] })
+  exams: string[];
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }] })
-  lessons: Lessons[];
+  @Prop({ type: [{ type: String, ref: 'Lesson' }] })
+  lessons: string[];
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Game' }] })
-  games: Games[];
+  @Prop({ type: [{ type: String, ref: 'Game' }] })
+  games: string[];
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
-  users: User[];
+  @Prop({ type: [{ type: String, ref: 'User' }] })
+  users: string[];
 }
 
 export const GroupsSchema = SchemaFactory.createForClass(Groups);

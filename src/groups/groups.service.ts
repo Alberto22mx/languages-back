@@ -16,7 +16,7 @@ export class GroupsService {
   }
 
   async findOne(id: string): Promise<Groups> {
-    return this.groupModel.findById(id).exec();
+    return this.groupModel.findOne({ id }).exec();
   }
 
   async create(createGroupsDto: CreateGroupsDto): Promise<Groups> {

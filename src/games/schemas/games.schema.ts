@@ -17,7 +17,7 @@ export type GamesDocument = Games & Document;
     },
   },
 })
-export class Games {
+export class Games extends Document {
   @Prop({ default: uuidv4, immutable: true })
   id: string;
 
@@ -25,11 +25,6 @@ export class Games {
   @IsString()
   @Prop({ required: true, trim: true })
   title: string;
-
-  @IsNotEmpty({ message: 'La descripción del juego es requerida' })
-  @IsString()
-  @Prop({ required: true, trim: true })
-  description: string;
 
   @IsNotEmpty({ message: 'Las instrucciones son requeridas' })
   @IsString()
