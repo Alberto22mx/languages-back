@@ -33,6 +33,9 @@ export class AuthService {
       accessToken: this.jwtService.sign(payload),
       idUser: user.id,
       userType: user.userType,
+      userName:
+        user.firstName + ' ' + user.lastNameFather + ' ' + user.lastNameMother,
+      registrationNumber: user.registrationNumber,
     };
   }
 
