@@ -35,7 +35,7 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    return this.userModel.findById(id).exec();
+    return this.userModel.findOne({ id }).exec();
   }
 
   async getActiveUsersByType(userType: string): Promise<User[]> {

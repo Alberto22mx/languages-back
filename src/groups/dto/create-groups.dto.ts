@@ -5,6 +5,7 @@ export class CreateGroupsDto {
   schedule: string;
   state: string;
   image: string;
+  course: string;
   exams: string[];
   lessons: string[];
   games: string[];

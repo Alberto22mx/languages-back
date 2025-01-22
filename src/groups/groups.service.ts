@@ -15,6 +15,31 @@ export class GroupsService {
     return this.groupModel.find().exec();
   }
 
+  async getGroupWithRelations(userId: string): Promise<Groups[]> {
+    return this.groupModel
+      .find({ users: userId }) // Busca por userId
+      .populate({
+        path: 'lessons',
+        select: 'id title instructions', // Incluye únicamente los campos seleccionados
+        localField: 'lessons',
+        foreignField: 'id',
+      })
+      .populate({
+        path: 'exams',
+        select: 'id', // Incluye únicamente los campos seleccionados
+        localField: 'exams',
+        foreignField: 'id',
+      })
+      .populate({
+        path: 'games',
+        select: 'id', // Incluye únicamente los campos seleccionados
+        localField: 'games',
+        foreignField: 'id',
+      })
+      .select('-users') // Excluye explícitamente la propiedad users
+      .exec();
+  }
+
   async findOne(id: string): Promise<Groups> {
     return this.groupModel.findOne({ id }).exec();
   }

@@ -18,7 +18,7 @@ export type GamesDocument = Games & Document;
   },
 })
 export class Games extends Document {
-  @Prop({ default: uuidv4, immutable: true })
+  @Prop({ default: uuidv4, immutable: true, type: String })
   id: string;
 
   @IsNotEmpty({ message: 'El nombre del juego es requerido' })

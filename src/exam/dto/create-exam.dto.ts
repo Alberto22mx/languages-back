@@ -4,4 +4,5 @@ export class CreateExamDto {
   instructions: string;
   active: boolean;
   image: string;
+  questions: string;
 }

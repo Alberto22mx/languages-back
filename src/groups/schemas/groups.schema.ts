@@ -20,13 +20,18 @@ export type GroupsDocument = Groups & Document;
   },
 })
 export class Groups extends Document {
-  @Prop({ default: uuidv4, immutable: true })
+  @Prop({ default: uuidv4, immutable: true, type: String })
   id: string;
 
   @IsNotEmpty({ message: 'El nombre del grupo es requerida' })
   @IsString()
   @Prop({ required: true, trim: true })
   nameGroup: string;
+
+  @IsNotEmpty({ message: 'El curso del grupo es requerido' })
+  @IsString()
+  @Prop({ required: true, trim: true })
+  course: string;
 
   @IsNotEmpty({ message: 'La descripción del grupo es requerida' })
   @IsString()
@@ -51,13 +56,13 @@ export class Groups extends Document {
   @Prop()
   image?: string;
 
-  @Prop({ type: [{ type: String, ref: 'Exam' }] })
-  exams: string[];
-
-  @Prop({ type: [{ type: String, ref: 'Lesson' }] })
+  @Prop({ type: [{ type: String, ref: 'Lessons' }] }) // Especifica que es String
   lessons: string[];
 
-  @Prop({ type: [{ type: String, ref: 'Game' }] })
+  @Prop({ type: [{ type: String, ref: 'Exams' }] }) // Especifica que es String
+  exams: string[];
+
+  @Prop({ type: [{ type: String, ref: 'Games' }] })
   games: string[];
 
   @Prop({ type: [{ type: String, ref: 'User' }] })

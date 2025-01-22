@@ -18,7 +18,7 @@ export type LessonsDocument = Lessons & Document;
   },
 })
 export class Lessons extends Document {
-  @Prop({ default: uuidv4, immutable: true })
+  @Prop({ default: uuidv4, immutable: true, type: String })
   id: string;
 
   @IsNotEmpty({ message: 'El título es requerido' })
@@ -30,6 +30,9 @@ export class Lessons extends Document {
   @IsString()
   @Prop({ required: true, trim: true })
   instructions: string;
+
+  @Prop({ default: '' })
+  content?: string;
 
   @Prop({ default: false })
   active: boolean;

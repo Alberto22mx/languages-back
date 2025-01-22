@@ -11,10 +11,10 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Lessons } from './lessons.entity';
 import { LessonsService } from './lessons.service';
 import { CreateLessonDto } from './dto/create-lessons.dto';
 import { UpdateLessonDto } from './dto/update-lessons.dto';
+import { Lessons } from './schemas/lessons.schema';
 
 @Controller('lessons')
 export class LessonsController {
@@ -23,6 +23,11 @@ export class LessonsController {
   @Get()
   findAll(): Promise<Lessons[]> {
     return this.lessonsService.findAll();
+  }
+
+  @Post('find-many')
+  findMany(@Body('ids') ids: string[]): Promise<Lessons[]> {
+    return this.lessonsService.findMany(ids);
   }
 
   @Get(':id')

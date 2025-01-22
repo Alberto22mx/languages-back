@@ -18,7 +18,7 @@ export type ExamsDocument = Exams & Document;
   },
 })
 export class Exams extends Document {
-  @Prop({ default: uuidv4, immutable: true })
+  @Prop({ default: uuidv4, immutable: true, type: String })
   id: string;
 
   @IsNotEmpty({ message: 'El título del examen es requerido' })
@@ -36,6 +36,9 @@ export class Exams extends Document {
 
   @Prop()
   image?: string;
+
+  @Prop({ type: [Object], required: true })
+  questions: any[];
 }
 
 export const ExamsSchema = SchemaFactory.createForClass(Exams);

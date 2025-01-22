@@ -35,7 +35,7 @@ enum UserType {
 })
 export class User {
   [x: string]: any;
-  @Prop({ default: uuidv4, immutable: true })
+  @Prop({ default: uuidv4, immutable: true, type: String })
   id: string;
 
   @IsNotEmpty({ message: 'El nombre es requerido' })

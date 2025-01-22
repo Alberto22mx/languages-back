@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Lessons } from './lessons.entity';
 import { Model } from 'mongoose';
-import { LessonsDocument } from './schemas/lessons.schema';
+import { Lessons, LessonsDocument } from './schemas/lessons.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { UpdateLessonDto } from './dto/update-lessons.dto';
 import { CreateLessonDto } from './dto/create-lessons.dto';
@@ -17,7 +16,15 @@ export class LessonsService {
   }
 
   async findOne(id: string): Promise<Lessons> {
-    return this.lessonModel.findById(id).exec();
+    return this.lessonModel.findOne({ id }).exec();
+  }
+
+  async findMany(ids: string[]): Promise<Lessons[]> {
+    console.log(ids);
+    return this.lessonModel
+      .find({ id: { $in: ids } })
+      .select('id title instructions content')
+      .exec();
   }
 
   async create(createLessonDto: CreateLessonDto): Promise<Lessons> {
