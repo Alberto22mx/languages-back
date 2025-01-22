@@ -16,7 +16,7 @@ export class ExamService {
   }
 
   async findOne(id: string): Promise<Exams> {
-    return this.examModel.findById(id).exec();
+    return this.examModel.findOne({ id }).exec();
   }
 
   async create(createExamDto: CreateExamDto): Promise<Exams> {

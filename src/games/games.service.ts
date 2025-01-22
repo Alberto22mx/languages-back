@@ -16,7 +16,7 @@ export class GamesService {
   }
 
   async findOne(id: string): Promise<Games> {
-    return this.gameModel.findById(id).exec();
+    return this.gameModel.findOne({ id }).exec();
   }
 
   async create(createLessonDto: CreateGamesDto): Promise<Games> {
