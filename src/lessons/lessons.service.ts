@@ -20,7 +20,6 @@ export class LessonsService {
   }
 
   async findMany(ids: string[]): Promise<Lessons[]> {
-    console.log(ids);
     return this.lessonModel
       .find({ id: { $in: ids } })
       .select('id title instructions content')

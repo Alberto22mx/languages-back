@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -14,46 +14,45 @@ export class ProgressService {
     @InjectModel(Progress.name) private progressModel: Model<ProgressDocument>,
   ) {}
 
+  // Crear un nuevo progreso
   async create(createProgressDto: CreateProgressDto): Promise<Progress> {
     const createdProgress = new this.progressModel(createProgressDto);
     return createdProgress.save();
   }
 
-  async findByUserAndType(userId: string, type: ProgressType) {
-    return this.progressModel.find({ userId, type }).exec();
+  // Obtener todos los progresos
+  async findAll(): Promise<Progress[]> {
+    return this.progressModel.find().exec();
   }
 
-  async findByUserAndReference(userId: string, referenceId: string) {
-    return this.progressModel.findOne({ userId, referenceId }).exec();
+  // Obtener un progreso por ID
+  async findOne(id: string): Promise<Progress> {
+    const progress = await this.progressModel.findById(id).exec();
+    if (!progress) {
+      throw new NotFoundException(`Progress with ID "${id}" not found`);
+    }
+    return progress;
   }
 
-  async updateProgress(
-    userId: string,
-    referenceId: string,
-    updateData: Partial<Progress>,
-  ) {
-    return this.progressModel
-      .findOneAndUpdate(
-        { userId, referenceId },
-        { $set: updateData },
-        { new: true },
-      )
+  // Actualizar un progreso
+  async update(
+    id: string,
+    updateProgressDto: CreateProgressDto,
+  ): Promise<Progress> {
+    const updatedProgress = await this.progressModel
+      .findByIdAndUpdate(id, updateProgressDto, { new: true })
       .exec();
+    if (!updatedProgress) {
+      throw new NotFoundException(`Progress with ID "${id}" not found`);
+    }
+    return updatedProgress;
   }
 
-  async getProgressStats(userId: string) {
-    return this.progressModel.aggregate([
-      { $match: { userId } },
-      {
-        $group: {
-          _id: '$type',
-          completedCount: {
-            $sum: { $cond: ['$completed', 1, 0] },
-          },
-          averageScore: { $avg: '$score' },
-          totalItems: { $sum: 1 },
-        },
-      },
-    ]);
+  // Eliminar un progreso
+  async remove(id: string): Promise<void> {
+    const result = await this.progressModel.findByIdAndDelete(id).exec();
+    if (!result) {
+      throw new NotFoundException(`Progress with ID "${id}" not found`);
+    }
   }
 }

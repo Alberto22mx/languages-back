@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Document } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 
 export type ProgressDocument = Progress & Document;
 
@@ -10,7 +11,10 @@ export enum ProgressType {
 }
 
 @Schema({ timestamps: true })
-export class Progress extends Document {
+export class Progress {
+  @Prop({ default: uuidv4, immutable: true, type: String })
+  id: string;
+
   @Prop({ required: true })
   userId: string;
 
@@ -21,11 +25,11 @@ export class Progress extends Document {
   })
   type: ProgressType;
 
-  @Prop({ type: [{ type: String, ref: 'Lesson' }] })
+  @Prop({ type: [{ type: String }] })
   referenceId: string;
 
-  @Prop({ type: MongooseSchema.Types.Mixed, required: true })
-  data: any;
+  @Prop({ type: [Object], required: true, default: [] })
+  answers: any[];
 }
 
 export const ProgressSchema = SchemaFactory.createForClass(Progress);

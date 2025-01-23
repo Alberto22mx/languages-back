@@ -25,6 +25,11 @@ export class ExamController {
     return this.examService.findAll();
   }
 
+  @Post('find-many')
+  findMany(@Body('ids') ids: string[]): Promise<Exams[]> {
+    return this.examService.findMany(ids);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Exams> {
     return this.examService.findOne(id);

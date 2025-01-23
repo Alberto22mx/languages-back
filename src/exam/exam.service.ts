@@ -15,6 +15,13 @@ export class ExamService {
     return this.examModel.find().exec();
   }
 
+  async findMany(ids: string[]): Promise<Exams[]> {
+    return this.examModel
+      .find({ id: { $in: ids } })
+      .select('id title instructions questions')
+      .exec();
+  }
+
   async findOne(id: string): Promise<Exams> {
     return this.examModel.findOne({ id }).exec();
   }

@@ -26,7 +26,7 @@ export class GroupsService {
       })
       .populate({
         path: 'exams',
-        select: 'id', // Incluye únicamente los campos seleccionados
+        select: 'id title instructions', // Incluye únicamente los campos seleccionados
         localField: 'exams',
         foreignField: 'id',
       })

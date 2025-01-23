@@ -37,7 +37,7 @@ export class Exams extends Document {
   @Prop()
   image?: string;
 
-  @Prop({ type: [Object], required: true })
+  @Prop({ type: [Object], required: true, default: [] })
   questions: any[];
 }
 

@@ -1,36 +1,48 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
-import { CreateProgressDto } from './dto/progress.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ProgressService } from './progress.service';
-import { Progress, ProgressType } from './schemas/progress.schema';
+import { CreateProgressDto } from './dto/progress.dto';
+import { Progress } from './schemas/progress.schema';
 
 @Controller('progress')
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
-
   @Post()
-  create(@Body() createProgressDto: CreateProgressDto) {
+  @HttpCode(HttpStatus.CREATED)
+  create(@Body() createProgressDto: CreateProgressDto): Promise<Progress> {
     return this.progressService.create(createProgressDto);
   }
 
-  @Get('user/:userId/type/:type')
-  findByUserAndType(
-    @Param('userId') userId: string,
-    @Param('type') type: string,
-  ) {
-    return this.progressService.findByUserAndType(userId, type as ProgressType);
+  @Get()
+  findAll(): Promise<Progress[]> {
+    return this.progressService.findAll();
   }
 
-  @Get('user/:userId/stats')
-  getProgressStats(@Param('userId') userId: string) {
-    return this.progressService.getProgressStats(userId);
+  @Get(':id')
+  findOne(@Param('id') id: string): Promise<Progress> {
+    return this.progressService.findOne(id);
   }
 
-  @Put('user/:userId/reference/:referenceId')
+  @Put(':id')
   update(
-    @Param('userId') userId: string,
-    @Param('referenceId') referenceId: string,
-    @Body() updateData: Partial<Progress>,
-  ) {
-    return this.progressService.updateProgress(userId, referenceId, updateData);
+    @Param('id') id: string,
+    @Body() updateProgressDto: CreateProgressDto,
+  ): Promise<Progress> {
+    return this.progressService.update(id, updateProgressDto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string): Promise<void> {
+    return this.progressService.remove(id);
   }
 }
