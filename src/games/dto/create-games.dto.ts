@@ -4,4 +4,5 @@ export class CreateGamesDto {
   instructions: string;
   active: string;
   image: string;
+  url: string;
 }

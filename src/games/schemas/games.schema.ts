@@ -36,6 +36,9 @@ export class Games extends Document {
 
   @Prop()
   image?: string;
+
+  @Prop()
+  url?: string;
 }
 
 export const GamesSchema = SchemaFactory.createForClass(Games);
