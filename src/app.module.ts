@@ -22,6 +22,7 @@ import { ConfigModule } from '@nestjs/config';
       envFilePath: '.env',
     }),
     MongooseModule.forRoot('mongodb://localhost:27017/englishforever'),
+    // MongooseModule.forRoot('mongodb+srv://jserrano:65u4dF9ih4x48Lh@cluster0.bk0i2.mongodb.net/englishforever?retryWrites=true&w=majority'),
     LessonsModule,
     GamesModule,
     GroupsModule,

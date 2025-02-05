@@ -6,7 +6,6 @@ import { Progress, ProgressSchema } from './schemas/progress.schema';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/englishforever'),
     MongooseModule.forFeature([
       { name: Progress.name, schema: ProgressSchema },
     ]),

@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import * as cors from 'cors';
+
 
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
-  private mail = process.env.MAIL_USER;
+  private mail = 'alberto22mx@gmail.com';
 
   constructor() {
-    const pass = process.env.MAIL_PASSWORD;
+    const pass = 'vfdt yfhf njet zhhb';
     this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
