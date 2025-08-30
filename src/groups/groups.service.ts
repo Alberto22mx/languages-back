@@ -32,7 +32,7 @@ export class GroupsService {
       })
       .populate({
         path: 'games',
-        select: 'id title instructions url', // Incluye únicamente los campos seleccionados
+        select: 'id title instructions url data type', // Incluye únicamente los campos seleccionados
         localField: 'games',
         foreignField: 'id',
       })

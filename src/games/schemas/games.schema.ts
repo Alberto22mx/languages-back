@@ -2,8 +2,17 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { v4 as uuidv4 } from 'uuid';
+import { Schema as MongooseSchema } from 'mongoose';
 
 export type GamesDocument = Games & Document;
+
+export enum GameType {
+  ACTION = 'Action',
+  PUZZLE = 'Puzzle',
+  ADVENTURE = 'Adventure',
+  STRATEGY = 'Strategy',
+  WORDSEARCH = 'WordSearch'
+}
 
 @Schema({
   timestamps: true,
@@ -39,6 +48,12 @@ export class Games extends Document {
 
   @Prop()
   url?: string;
+
+  @Prop({ type: [MongooseSchema.Types.Mixed] }) 
+  data?: any[];
+
+  @Prop({ enum: GameType, required: true })
+  type: GameType;
 }
 
 export const GamesSchema = SchemaFactory.createForClass(Games);

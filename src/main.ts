@@ -11,40 +11,49 @@ async function bootstrap() {
 
   // Configuración de CORS
   app.use(cors({
-    origin: [
-      'http://localhost:4200', // Frontend local en desarrollo
-      'https://localhost:4200',
-      'http://english-4ever.s3-website.us-east-2.amazonaws.com', // Dominio en producción
-      'https://english-4ever.s3-website.us-east-2.amazonaws.com',
-      'http://52.219.229.136:80',
-      'https://52.219.229.136:80',
-      'http://english-4ever.s3-website.us-east-2.amazonaws.com/',
-      'https://staging.d22scooffsij30.amplifyapp.com',
-      'http://staging.d22scooffsij30.amplifyapp.com',
-      'http://65.9.121.128:80',
-      'https://65.9.121.128:80'
-    ], // Dominio permitido (o toma desde .env)
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Métodos permitidos
-    allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
-    credentials: true, // Permitir envío de credenciales (cookies o tokens)
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      const allowedOrigins = [
+        'http://localhost:4200', // Frontend local en desarrollo
+        'https://localhost:4200',
+        'http://english-4ever.s3-website.us-east-2.amazonaws.com', // Dominio en producción
+        'https://english-4ever.s3-website.us-east-2.amazonaws.com',
+        'http://52.219.229.136:80',
+        'https://52.219.229.136:80',
+        'http://english-4ever.s3-website.us-east-2.amazonaws.com/',
+        'https://staging.d22scooffsij30.amplifyapp.com',
+        'http://staging.d22scooffsij30.amplifyapp.com',
+        'http://65.9.121.128:80',
+        'https://65.9.121.128:80'
+      ];
+
+      // Allow any localhost or 127.0.0.1 origin with any port
+      if (origin.match(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/)) {
+        callback(null, true);
+        return;
+      }
+
+      // Check against other allowed origins
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   }));
 
-  app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
-      res.header('Access-Control-Allow-Origin', req.headers.origin || 'http://localhost:4200');
-      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.header('Access-Control-Allow-Credentials', 'true');
-      return res.status(204).send(); // Respuesta exitosa para OPTIONS
-    }
-    next();
-  });
-
-  // Tomar el puerto desde las variables de entorno o usar 8080 por defecto
   const PORT = process.env.PORT || 8080;
   await app.listen(PORT);
 
-  // Mensajes de depuración
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 }
 
