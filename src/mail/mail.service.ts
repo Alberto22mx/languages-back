@@ -1,30 +1,41 @@
 import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import * as cors from 'cors';
-
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class MailService {
-  private transporter: nodemailer.Transporter;
-  private mail = 'alberto22mx@gmail.com';
+  private readonly transporter?: nodemailer.Transporter;
+  private readonly mail?: string;
+  private readonly enabled: boolean;
 
-  constructor() {
-    const pass = 'vfdt yfhf njet zhhb';
+  constructor(private readonly configService: ConfigService) {
+    this.enabled =
+      this.configService.get<string>('MAIL_ENABLED', 'true') === 'true';
+
+    if (!this.enabled) {
+      return;
+    }
+
+    this.mail = this.configService.getOrThrow<string>('MAIL_USER');
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: this.configService.get<string>('MAIL_PROVIDER', 'gmail'),
       auth: {
-        user: this.mail, // Tu correo de Gmail
-        pass: pass, // Tu contraseña de Gmail o App Password
+        user: this.mail,
+        pass: this.configService.getOrThrow<string>('MAIL_PASSWORD'),
       },
     });
   }
 
   async sendMail(subject: string, user: CreateUserDto, plainPassword: string) {
+    if (!this.enabled) {
+      return;
+    }
+
     const mailOptions = {
-      from: this.mail, // Remitente
-      to: user.email, // Destinatario(s)
-      subject, // Asunto
+      from: this.mail,
+      to: user.email,
+      subject,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
           <h2>Bienvenido ${user.firstName} ${user.lastNameFather}</h2>
@@ -40,7 +51,7 @@ export class MailService {
     };
 
     try {
-      const info = await this.transporter.sendMail(mailOptions);
+      const info = await this.transporter!.sendMail(mailOptions);
       console.log('Correo enviado: ', info.messageId);
       return info;
     } catch (error) {

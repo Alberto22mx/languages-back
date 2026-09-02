@@ -4,18 +4,24 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from 'src/users/schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  private readonly saltRounds = 10;
+  private readonly saltRounds: number;
 
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private jwtService: JwtService,
-  ) {}
+    configService: ConfigService,
+  ) {
+    this.saltRounds = Number(
+      configService.get<string>('BCRYPT_SALT_ROUNDS', '10'),
+    );
+  }
 
   async register(email: string, password: string) {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, this.saltRounds);
     const newUser = new this.userModel({ email, password: hashedPassword });
     return newUser.save();
   }

@@ -13,7 +13,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ProgressController } from './progress/progress.controller';
 import { ProgressModule } from './progress/progress.module';
 import { MailModule } from './mail/mail.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -21,8 +21,12 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    MongooseModule.forRoot('mongodb://localhost:27017/englishforever'),
-    // MongooseModule.forRoot('mongodb+srv://jserrano:65u4dF9ih4x48Lh@cluster0.bk0i2.mongodb.net/englishforever?retryWrites=true&w=majority'),
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.getOrThrow<string>('MONGODB_URI'),
+      }),
+    }),
     LessonsModule,
     GamesModule,
     GroupsModule,
