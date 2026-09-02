@@ -37,8 +37,9 @@ export class CreateUserDto {
   @Type(() => Date)
   @IsDate()
   birthDate: Date;
+  @IsOptional()
   @IsEnum(['active', 'inactive'])
-  state: string;
+  state?: string;
   @IsBoolean()
   termsAccepted: boolean;
   @IsEnum(UserType)

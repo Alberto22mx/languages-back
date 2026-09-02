@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
@@ -10,6 +14,8 @@ import { randomBytes } from 'crypto';
 
 @Injectable()
 export class UsersService {
+  private static readonly PROTECTED_ADMIN = 'ADM000001';
+
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private readonly authService: AuthService,
@@ -75,6 +81,8 @@ export class UsersService {
 
     const userWithEncript = {
       ...createUserDto,
+      // Las cuentas deben ser habilitadas explícitamente por el administrador.
+      state: 'inactive',
       password: hashedPassword,
       registrationNumber: nuevaMatricula,
       setupTokenHash: this.authService.hashOpaqueToken(setupToken),
@@ -95,6 +103,24 @@ export class UsersService {
     id: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UserDocument> {
+    const currentUser = await this.userModel.findOne({ id }).exec();
+    if (!currentUser) {
+      throw new NotFoundException(`User with username "${id}" not found`);
+    }
+
+    if (
+      currentUser.registrationNumber === UsersService.PROTECTED_ADMIN &&
+      (updateUserDto.state === 'inactive' ||
+        (updateUserDto.registrationNumber !== undefined &&
+          updateUserDto.registrationNumber !== UsersService.PROTECTED_ADMIN) ||
+        (updateUserDto.userType !== undefined &&
+          updateUserDto.userType !== 'admin'))
+    ) {
+      throw new BadRequestException(
+        'ADM000001 debe permanecer activo, ser administrador y conservar su matrícula',
+      );
+    }
+
     const updatedUser = await this.userModel
       .findOneAndUpdate({ id }, updateUserDto, { new: true })
       .exec();
@@ -107,6 +133,16 @@ export class UsersService {
   }
 
   async deleteUserById(customId: string): Promise<void> {
+    const user = await this.userModel.findOne({ id: customId }).exec();
+    if (!user) {
+      throw new NotFoundException(`User with id ${customId} not found`);
+    }
+    if (user.registrationNumber === UsersService.PROTECTED_ADMIN) {
+      throw new BadRequestException(
+        'El administrador ADM000001 no puede eliminarse',
+      );
+    }
+
     const result = await this.userModel.deleteOne({ id: customId });
 
     if (result.deletedCount === 0) {

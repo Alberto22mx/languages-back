@@ -13,6 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "admin:create": "ts-node -r tsconfig-paths/register src/scripts/create-admin.ts",
+    "users:disable-except-admin": "ts-node -r tsconfig-paths/register src/scripts/disable-users-except-admin.ts",
     "lint": "eslint \"{src,apps,libs}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",

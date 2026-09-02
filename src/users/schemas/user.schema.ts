@@ -85,7 +85,7 @@ export class User {
 
   @IsNotEmpty()
   @IsEnum(['active', 'inactive'], { message: 'Estado inválido' })
-  @Prop({ required: true, enum: ['active', 'inactive'], default: 'active' })
+  @Prop({ required: true, enum: ['active', 'inactive'], default: 'inactive' })
   state: string;
 
   @Prop()
