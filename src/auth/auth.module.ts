@@ -19,7 +19,7 @@ import { JwtSignOptions } from '@nestjs/jwt';
         signOptions: {
           expiresIn: configService.get<string>(
             'JWT_EXPIRES_IN',
-            '8h',
+            '20m',
           ) as JwtSignOptions['expiresIn'],
         },
       }),

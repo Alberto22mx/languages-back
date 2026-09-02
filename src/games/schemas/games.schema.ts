@@ -11,7 +11,7 @@ export enum GameType {
   PUZZLE = 'Puzzle',
   ADVENTURE = 'Adventure',
   STRATEGY = 'Strategy',
-  WORDSEARCH = 'WordSearch'
+  WORDSEARCH = 'WordSearch',
 }
 
 @Schema({
@@ -49,7 +49,7 @@ export class Games extends Document {
   @Prop()
   url?: string;
 
-  @Prop({ type: [MongooseSchema.Types.Mixed] }) 
+  @Prop({ type: [MongooseSchema.Types.Mixed] })
   data?: any[];
 
   @Prop({ enum: GameType, required: true })

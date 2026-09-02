@@ -14,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export type UserDocument = User & Document;
 
-enum UserType {
+export enum UserType {
   ADMIN = 'admin',
   STUDENT = 'student',
   TEACHER = 'teacher',
@@ -28,7 +28,7 @@ enum UserType {
     transform: function (doc, ret) {
       delete ret._id;
       delete ret.__v;
-      delete ret.password;
+      delete (ret as Record<string, unknown>).password;
       return ret;
     },
   },
@@ -54,15 +54,15 @@ export class User {
   lastNameMother: string;
 
   @IsNotEmpty()
-  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
+  @MinLength(10, { message: 'La contraseña debe tener al menos 10 caracteres' })
   @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
     message: 'La contraseña debe contener mayúsculas, minúsculas y números',
   })
-  @Prop({ required: true })
+  @Prop({ required: true, select: false })
   password: string;
 
   @IsNotEmpty()
-  @Prop({ required: true, trim: true })
+  @Prop({ required: true, unique: true, trim: true })
   registrationNumber: string;
 
   @IsNotEmpty()
@@ -101,6 +101,15 @@ export class User {
 
   @Prop()
   deletedAt: Date;
+
+  @Prop({ select: false })
+  refreshTokenHash?: string;
+
+  @Prop({ select: false })
+  setupTokenHash?: string;
+
+  @Prop({ select: false })
+  setupTokenExpiresAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

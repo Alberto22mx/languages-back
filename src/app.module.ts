@@ -10,17 +10,21 @@ import { AuthModule } from './auth/auth.module';
 import { ExamModule } from './exam/exam.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
-import { ProgressController } from './progress/progress.controller';
 import { ProgressModule } from './progress/progress.module';
 import { MailModule } from './mail/mail.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { RolesGuard } from './auth/roles.guard';
+import { validateEnvironment } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate: validateEnvironment,
     }),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -36,12 +40,20 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     ProgressModule,
     MailModule,
   ],
-  controllers: [AppController, ProgressController],
+  controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })

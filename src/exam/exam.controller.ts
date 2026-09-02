@@ -15,6 +15,8 @@ import { ExamService } from './exam.service';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { Exams } from './schemas/exams.schema';
 import { UpdateExamDto } from './dto/update-exam.dto';
+import { Roles } from '../decorators/roles.decorator';
+import { UserRole } from '../auth/user-role.enum';
 
 @Controller('exam')
 export class ExamController {
@@ -36,12 +38,14 @@ export class ExamController {
   }
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @UsePipes(new ValidationPipe())
   async create(@Body() createUserDto: CreateExamDto) {
     return this.examService.create(createUserDto);
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   async updateExam(
     @Param('id') id: string,
     @Body() updateExamDto: UpdateExamDto,
@@ -50,6 +54,7 @@ export class ExamController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string): Promise<void> {
     await this.examService.deleteUserById(id);

@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { MailService } from 'src/mail/mail.service';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class UsersService {
@@ -42,12 +43,11 @@ export class UsersService {
     return this.userModel.find({ userType, state: 'active' }).exec();
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    console.log(createUserDto);
-    // Generamos una contraseña aleatoria si no se proporciona una
-    const password = createUserDto.password || this.generateSecurePassword();
-    console.log(password);
-    const hashedPassword = await this.authService.hashPassword(password);
+  async create(createUserDto: CreateUserDto) {
+    const setupToken = randomBytes(32).toString('base64url');
+    const unusablePassword = randomBytes(48).toString('base64url');
+    const hashedPassword =
+      await this.authService.hashPassword(unusablePassword);
 
     let nuevaMatricula = null;
 
@@ -77,14 +77,18 @@ export class UsersService {
       ...createUserDto,
       password: hashedPassword,
       registrationNumber: nuevaMatricula,
+      setupTokenHash: this.authService.hashOpaqueToken(setupToken),
+      setupTokenExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     };
-    console.log(userWithEncript);
-    // Enviar correo de registro
-    this.mailService.sendMail('Registro', userWithEncript, password);
-
     const createdUser = new this.userModel(userWithEncript);
-    console.log(createdUser);
-    return createdUser.save();
+    const savedUser = await createdUser.save();
+    await this.mailService.sendAccountSetup(savedUser, setupToken);
+
+    return {
+      user: savedUser,
+      // En desarrollo sin correo, el administrador necesita entregar este token.
+      ...(this.mailService.isEnabled() ? {} : { setupToken }),
+    };
   }
 
   async updateUser(
@@ -108,33 +112,5 @@ export class UsersService {
     if (result.deletedCount === 0) {
       throw new NotFoundException(`User with id ${customId} not found`);
     }
-  }
-
-  // Función para generar contraseña aleatoria
-  generateSecurePassword(length: number = 10): string {
-    const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
-    const numberChars = '0123456789';
-    const specialChars = '!@#$%^&*?';
-
-    // Aseguramos que tenga al menos uno de cada tipo
-    let password =
-      uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)] +
-      lowercaseChars[Math.floor(Math.random() * lowercaseChars.length)] +
-      numberChars[Math.floor(Math.random() * numberChars.length)] +
-      specialChars[Math.floor(Math.random() * specialChars.length)];
-
-    // Completamos el resto de la longitud con caracteres aleatorios
-    const allChars =
-      uppercaseChars + lowercaseChars + numberChars + specialChars;
-    for (let i = password.length; i < length; i++) {
-      password += allChars[Math.floor(Math.random() * allChars.length)];
-    }
-
-    // Mezclamos los caracteres para que no sigan un patrón
-    return password
-      .split('')
-      .sort(() => Math.random() - 0.5)
-      .join('');
   }
 }

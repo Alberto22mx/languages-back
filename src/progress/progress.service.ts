@@ -1,11 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  Progress,
-  ProgressDocument,
-  ProgressType,
-} from './schemas/progress.schema';
+import { Progress, ProgressDocument } from './schemas/progress.schema';
 import { CreateProgressDto } from './dto/progress.dto';
 
 @Injectable()
@@ -26,8 +22,10 @@ export class ProgressService {
   }
 
   // Obtener un progreso por ID
-  async findOne(id: string): Promise<Progress> {
-    const progress = await this.progressModel.findById(id).exec();
+  async findOne(id: string, ownerId?: string): Promise<Progress> {
+    const progress = await this.progressModel
+      .findOne({ _id: id, ...(ownerId ? { userId: ownerId } : {}) })
+      .exec();
     if (!progress) {
       throw new NotFoundException(`Progress with ID "${id}" not found`);
     }
@@ -38,9 +36,14 @@ export class ProgressService {
   async update(
     id: string,
     updateProgressDto: CreateProgressDto,
+    ownerId?: string,
   ): Promise<Progress> {
     const updatedProgress = await this.progressModel
-      .findByIdAndUpdate(id, updateProgressDto, { new: true })
+      .findOneAndUpdate(
+        { _id: id, ...(ownerId ? { userId: ownerId } : {}) },
+        updateProgressDto,
+        { new: true, runValidators: true },
+      )
       .exec();
     if (!updatedProgress) {
       throw new NotFoundException(`Progress with ID "${id}" not found`);

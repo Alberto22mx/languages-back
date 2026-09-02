@@ -15,6 +15,8 @@ import { GroupsService } from './groups.service';
 import { Groups } from './schemas/groups.schema';
 import { CreateGroupsDto } from './dto/create-groups.dto';
 import { UpdateGroupsDto } from './dto/update-groups.dto';
+import { Roles } from '../decorators/roles.decorator';
+import { UserRole } from '../auth/user-role.enum';
 
 @Controller('groups')
 export class GroupsController {
@@ -36,12 +38,14 @@ export class GroupsController {
   }
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @UsePipes(new ValidationPipe())
   async create(@Body() createUserDto: CreateGroupsDto) {
     return this.groupsService.create(createUserDto);
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   async updateGroup(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateGroupsDto,
@@ -50,6 +54,7 @@ export class GroupsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string): Promise<void> {
     await this.groupsService.deleteUserById(id);

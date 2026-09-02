@@ -15,6 +15,8 @@ import { LessonsService } from './lessons.service';
 import { CreateLessonDto } from './dto/create-lessons.dto';
 import { UpdateLessonDto } from './dto/update-lessons.dto';
 import { Lessons } from './schemas/lessons.schema';
+import { Roles } from '../decorators/roles.decorator';
+import { UserRole } from '../auth/user-role.enum';
 
 @Controller('lessons')
 export class LessonsController {
@@ -36,12 +38,14 @@ export class LessonsController {
   }
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   @UsePipes(new ValidationPipe())
   async create(@Body() createUserDto: CreateLessonDto) {
     return this.lessonsService.create(createUserDto);
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
   async updateUser(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateLessonDto,
@@ -50,6 +54,7 @@ export class LessonsController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string): Promise<void> {
     await this.lessonsService.deleteUserById(id);

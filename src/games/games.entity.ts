@@ -1,4 +1,4 @@
-import { GameType } from "./schemas/games.schema";
+import { GameType } from './schemas/games.schema';
 
 export class Games {
   id: string;
