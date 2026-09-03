@@ -45,7 +45,14 @@ export class GroupsService {
   }
 
   async create(createGroupsDto: CreateGroupsDto): Promise<Groups> {
-    const group = new this.groupModel(createGroupsDto);
+    const group = new this.groupModel({
+      state: 'active',
+      exams: [],
+      lessons: [],
+      games: [],
+      users: [],
+      ...createGroupsDto,
+    });
     return group.save();
   }
 

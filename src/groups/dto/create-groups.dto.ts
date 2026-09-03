@@ -19,8 +19,9 @@ export class CreateGroupsDto {
   level: string;
   @IsEnum(ScheduleGroup)
   schedule: string;
+  @IsOptional()
   @IsEnum(['active', 'inactive'])
-  state: string;
+  state?: string;
   @IsOptional()
   @IsString()
   image: string;
@@ -28,16 +29,20 @@ export class CreateGroupsDto {
   course: string;
   @IsString()
   description: string;
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  exams: string[];
+  exams?: string[];
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  lessons: string[];
+  lessons?: string[];
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  games: string[];
+  games?: string[];
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  users: string[];
+  users?: string[];
 }

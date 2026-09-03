@@ -56,16 +56,16 @@ export class Groups extends Document {
   @Prop()
   image?: string;
 
-  @Prop({ type: [{ type: String, ref: 'Lessons' }] }) // Especifica que es String
+  @Prop({ type: [{ type: String, ref: 'Lessons' }], default: [] }) // Especifica que es String
   lessons: string[];
 
-  @Prop({ type: [{ type: String, ref: 'Exams' }] }) // Especifica que es String
+  @Prop({ type: [{ type: String, ref: 'Exams' }], default: [] }) // Especifica que es String
   exams: string[];
 
-  @Prop({ type: [{ type: String, ref: 'Games' }] })
+  @Prop({ type: [{ type: String, ref: 'Games' }], default: [] })
   games: string[];
 
-  @Prop({ type: [{ type: String, ref: 'User' }] })
+  @Prop({ type: [{ type: String, ref: 'User' }], default: [] })
   users: string[];
 }
 
