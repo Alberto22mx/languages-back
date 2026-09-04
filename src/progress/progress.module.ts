@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Progress, ProgressSchema } from './schemas/progress.schema';
 import { Groups, GroupsSchema } from 'src/groups/schemas/groups.schema';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
+import { Exams, ExamsSchema } from 'src/exam/schemas/exams.schema';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { User, UserSchema } from 'src/users/schemas/user.schema';
       { name: Progress.name, schema: ProgressSchema },
       { name: Groups.name, schema: GroupsSchema },
       { name: User.name, schema: UserSchema },
+      { name: Exams.name, schema: ExamsSchema },
     ]),
   ],
   controllers: [ProgressController],

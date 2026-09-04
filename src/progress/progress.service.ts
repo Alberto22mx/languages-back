@@ -6,6 +6,7 @@ import { CreateProgressDto } from './dto/progress.dto';
 import { Groups, GroupsDocument } from '../groups/schemas/groups.schema';
 import { User, UserDocument, UserType } from '../users/schemas/user.schema';
 import { ProgressType } from './schemas/progress.schema';
+import { Exams, ExamsDocument } from '../exam/schemas/exams.schema';
 
 @Injectable()
 export class ProgressService {
@@ -13,6 +14,7 @@ export class ProgressService {
     @InjectModel(Progress.name) private progressModel: Model<ProgressDocument>,
     @InjectModel(Groups.name) private groupModel: Model<GroupsDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Exams.name) private examModel: Model<ExamsDocument>,
   ) {}
 
   // Crear un nuevo progreso
@@ -75,7 +77,31 @@ export class ProgressService {
       .exec();
   }
 
-  async gradeExam(id: string, score: number, feedback: string | undefined, graderId: string, teacherId?: string): Promise<Progress> {
+  async getStudentExamResults(studentId: string, teacherId: string) {
+    const groups = await this.groupModel.find({
+      users: { $all: [teacherId, studentId] },
+    }).select('id exams').exec();
+    const examIds = [...new Set(groups.flatMap((group) => group.exams))];
+    const submissions = await this.progressModel.find({
+      type: ProgressType.EXAM,
+      userId: studentId,
+      referenceId: { $in: examIds },
+    }).sort({ createdAt: -1 }).exec();
+    const latestByExam = new Map<string, Progress>();
+    for (const submission of submissions) {
+      if (!latestByExam.has(submission.referenceId)) {
+        latestByExam.set(submission.referenceId, submission);
+      }
+    }
+    const exams = await this.examModel.find({ id: { $in: [...latestByExam.keys()] } }).exec();
+    return exams.map((exam) => ({
+      groupId: groups.find((group) => group.exams.includes(exam.id))?.id,
+      exam,
+      submission: latestByExam.get(exam.id),
+    }));
+  }
+
+  async gradeExam(id: string, answers: any[], feedback: string | undefined, graderId: string, teacherId?: string): Promise<Progress> {
     const progress = await this.progressModel.findById(id).exec();
     if (!progress || progress.type !== ProgressType.EXAM) {
       throw new NotFoundException(`Exam submission with ID "${id}" not found`);
@@ -91,7 +117,15 @@ export class ProgressService {
       }
     }
 
-    progress.score = score;
+    const gradedAnswers = progress.answers.map((answer) => {
+      const evaluation = answers.find((item) => item.questionId === answer.questionId);
+      return { ...answer, isCorrect: evaluation?.isCorrect === true };
+    });
+    progress.answers = gradedAnswers;
+    const correctAnswers = gradedAnswers.filter((answer) => answer.isCorrect).length;
+    progress.score = gradedAnswers.length
+      ? Math.round((correctAnswers / gradedAnswers.length) * 100)
+      : 0;
     progress.feedback = feedback;
     progress.gradedBy = graderId;
     progress.gradedAt = new Date();

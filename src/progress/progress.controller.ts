@@ -63,6 +63,15 @@ export class ProgressController {
     return this.progressService.getStudentExamStatus(examId, request.user.userId);
   }
 
+  @Get('student-exam-results/:studentId')
+  @Roles(UserRole.TEACHER)
+  getStudentExamResults(
+    @Param('studentId') studentId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.progressService.getStudentExamResults(studentId, request.user.userId);
+  }
+
   @Get(':id')
   findOne(
     @Param('id') id: string,
@@ -102,7 +111,7 @@ export class ProgressController {
     const teacherId = request.user.userType === UserRole.TEACHER ? request.user.userId : undefined;
     return this.progressService.gradeExam(
       id,
-      gradeDto.score,
+      gradeDto.answers,
       gradeDto.feedback,
       request.user.userId,
       teacherId,

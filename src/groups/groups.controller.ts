@@ -17,6 +17,10 @@ import { CreateGroupsDto } from './dto/create-groups.dto';
 import { UpdateGroupsDto } from './dto/update-groups.dto';
 import { Roles } from '../decorators/roles.decorator';
 import { UserRole } from '../auth/user-role.enum';
+import { Req } from '@nestjs/common';
+import { Request } from 'express';
+
+type AuthenticatedRequest = Request & { user: { userId: string; userType: UserRole } };
 
 @Controller('groups')
 export class GroupsController {
@@ -30,6 +34,12 @@ export class GroupsController {
   @Get('group-relation/:userId')
   async getGroup(@Param('userId') userId: string): Promise<Groups[]> {
     return this.groupsService.getGroupWithRelations(userId);
+  }
+
+  @Get('teacher/students')
+  @Roles(UserRole.TEACHER)
+  getStudentsForTeacher(@Req() request: AuthenticatedRequest) {
+    return this.groupsService.getStudentsForTeacher(request.user.userId);
   }
 
   @Get(':id')

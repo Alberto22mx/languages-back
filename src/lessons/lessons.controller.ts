@@ -14,6 +14,7 @@ import {
 import { LessonsService } from './lessons.service';
 import { CreateLessonDto } from './dto/create-lessons.dto';
 import { UpdateLessonDto } from './dto/update-lessons.dto';
+import { FindLessonsDto } from './dto/find-lessons.dto';
 import { Lessons } from './schemas/lessons.schema';
 import { Roles } from '../decorators/roles.decorator';
 import { UserRole } from '../auth/user-role.enum';
@@ -28,8 +29,8 @@ export class LessonsController {
   }
 
   @Post('find-many')
-  findMany(@Body('ids') ids: string[]): Promise<Lessons[]> {
-    return this.lessonsService.findMany(ids);
+  findMany(@Body() findLessonsDto: FindLessonsDto): Promise<Lessons[]> {
+    return this.lessonsService.findMany(findLessonsDto.ids);
   }
 
   @Get(':id')

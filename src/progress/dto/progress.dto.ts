@@ -14,10 +14,8 @@ export class CreateProgressDto {
 }
 
 export class GradeExamProgressDto {
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  score: number;
+  @IsArray()
+  answers: any[];
 
   @IsOptional()
   @IsString()
