@@ -39,6 +39,12 @@ export class Exams extends Document {
 
   @Prop({ type: [Object], required: true, default: [] })
   questions: any[];
+
+  @Prop({ type: Date })
+  availableUntil?: Date;
+
+  @Prop({ type: Number, default: 1, min: 1 })
+  maxAttempts: number;
 }
 
 export const ExamsSchema = SchemaFactory.createForClass(Exams);

@@ -1,5 +1,5 @@
 import { ProgressType } from '../schemas/progress.schema';
-import { IsArray, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class CreateProgressDto {
   @IsOptional()
@@ -20,4 +20,10 @@ export class GradeExamProgressDto {
   @IsOptional()
   @IsString()
   feedback?: string;
+}
+
+export class RequestExamAccessDto {
+  @IsOptional()
+  @IsString()
+  reason?: string;
 }

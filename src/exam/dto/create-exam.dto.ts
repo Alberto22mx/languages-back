@@ -1,6 +1,7 @@
 import {
   IsArray,
   IsBoolean,
+  IsDateString,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -32,4 +33,8 @@ export class CreateExamDto {
   @IsOptional()
   @IsArray()
   questions?: any[];
+
+  @IsOptional()
+  @IsDateString()
+  availableUntil?: string;
 }

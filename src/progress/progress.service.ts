@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Progress, ProgressDocument } from './schemas/progress.schema';
@@ -7,6 +7,7 @@ import { Groups, GroupsDocument } from '../groups/schemas/groups.schema';
 import { User, UserDocument, UserType } from '../users/schemas/user.schema';
 import { ProgressType } from './schemas/progress.schema';
 import { Exams, ExamsDocument } from '../exam/schemas/exams.schema';
+import { ExamAccessRequest, ExamAccessRequestDocument, ExamAccessRequestStatus } from './schemas/exam-access-request.schema';
 
 @Injectable()
 export class ProgressService {
@@ -15,6 +16,7 @@ export class ProgressService {
     @InjectModel(Groups.name) private groupModel: Model<GroupsDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Exams.name) private examModel: Model<ExamsDocument>,
+    @InjectModel(ExamAccessRequest.name) private accessRequestModel: Model<ExamAccessRequestDocument>,
   ) {}
 
   // Crear un nuevo progreso
@@ -28,6 +30,33 @@ export class ProgressService {
       if (!group) {
         throw new ForbiddenException('El examen no está asignado a un grupo activo del alumno');
       }
+      const exam = await this.examModel.findOne({ id: createProgressDto.referenceId }).exec();
+      if (!exam) throw new NotFoundException('Examen no encontrado');
+      if (exam.availableUntil && new Date() > exam.availableUntil) {
+        throw new ForbiddenException('La fecha límite para presentar este examen ya venció');
+      }
+      const submissions = await this.progressModel.countDocuments({
+        type: ProgressType.EXAM,
+        referenceId: exam.id,
+        userId: createProgressDto.userId,
+      });
+      const approvedRequest = await this.accessRequestModel.findOne({
+        examId: exam.id,
+        studentId: createProgressDto.userId,
+        status: ExamAccessRequestStatus.APPROVED,
+        attemptUsed: false,
+        expiresAt: { $gt: new Date() },
+      }).exec();
+      if (submissions >= exam.maxAttempts + (approvedRequest ? 1 : 0)) {
+        throw new ForbiddenException('Ya utilizaste todos los intentos disponibles para este examen');
+      }
+      const createdProgress = new this.progressModel(createProgressDto);
+      const savedProgress = await createdProgress.save();
+      if (approvedRequest) {
+        approvedRequest.attemptUsed = true;
+        await approvedRequest.save();
+      }
+      return savedProgress;
     }
     const createdProgress = new this.progressModel(createProgressDto);
     return createdProgress.save();
@@ -77,11 +106,125 @@ export class ProgressService {
       .exec();
   }
 
+  async getExamAccess(examId: string, studentId: string) {
+    const exam = await this.examModel.findOne({ id: examId }).select('id availableUntil maxAttempts').exec();
+    if (!exam) throw new NotFoundException('Examen no encontrado');
+    const assigned = await this.groupModel.exists({ users: studentId, exams: examId, state: 'active' });
+    if (!assigned) throw new ForbiddenException('El examen no está asignado a un grupo activo del alumno');
+    let request = await this.accessRequestModel.findOne({ examId, studentId }).sort({ createdAt: -1 }).exec();
+    if (request?.status === ExamAccessRequestStatus.APPROVED && !request.attemptUsed && request.expiresAt && new Date() > request.expiresAt) {
+      await this.recordExpiredAdditionalAttempt(examId, studentId, request);
+      request = await this.accessRequestModel.findOne({ id: request.id }).exec();
+    }
+    const submissions = await this.progressModel.countDocuments({ type: ProgressType.EXAM, referenceId: examId, userId: studentId });
+    const latestSubmission = await this.progressModel
+      .findOne({ type: ProgressType.EXAM, referenceId: examId, userId: studentId })
+      .sort({ createdAt: -1 })
+      .select('score gradedAt createdAt')
+      .exec();
+    const deadlinePassed = !!exam.availableUntil && new Date() > exam.availableUntil;
+    const additionalAttemptActive = request?.status === ExamAccessRequestStatus.APPROVED
+      && !request.attemptUsed
+      && !!request.expiresAt
+      && new Date() <= request.expiresAt;
+    return {
+      submissions,
+      allowedAttempts: exam.maxAttempts + (additionalAttemptActive ? 1 : 0),
+      availableUntil: exam.availableUntil ?? null,
+      deadlinePassed,
+      canSubmit: !deadlinePassed && submissions < exam.maxAttempts + (additionalAttemptActive ? 1 : 0),
+      request: request ?? null,
+      additionalAttemptExpiresAt: additionalAttemptActive ? request.expiresAt : null,
+      score: latestSubmission?.score ?? null,
+      pendingGrade: !!latestSubmission && latestSubmission.score === undefined,
+    };
+  }
+
+  async requestExamAccess(examId: string, studentId: string, reason?: string) {
+    const access = await this.getExamAccess(examId, studentId);
+    if (access.deadlinePassed) throw new BadRequestException('No se puede solicitar una oportunidad después de la fecha límite');
+    if (access.canSubmit) throw new BadRequestException('Aún tienes un intento disponible');
+    const existingRequest = await this.accessRequestModel.exists({ examId, studentId });
+    if (existingRequest) throw new BadRequestException('Solo puedes solicitar una oportunidad adicional por examen');
+    return new this.accessRequestModel({ examId, studentId, reason }).save();
+  }
+
+  async getExamAccessRequests(teacherId: string): Promise<any[]> {
+    const groups = await this.groupModel.find({ users: teacherId }).select('users exams').exec();
+    const examIds = [...new Set(groups.flatMap((group) => group.exams))];
+    const studentIds = [...new Set(groups.flatMap((group) => group.users))];
+    const requests = await this.accessRequestModel.find({ examId: { $in: examIds }, studentId: { $in: studentIds } }).sort({ createdAt: -1 }).exec();
+    const [students, exams] = await Promise.all([
+      this.userModel.find({ id: { $in: studentIds }, userType: UserType.STUDENT }).select('id firstName lastNameFather lastNameMother registrationNumber').exec(),
+      this.examModel.find({ id: { $in: examIds } }).select('id title availableUntil').exec(),
+    ]);
+    return requests.map((request) => ({
+      ...request.toJSON(),
+      student: students.find((student) => student.id === request.studentId),
+      exam: exams.find((exam) => exam.id === request.examId),
+    }));
+  }
+
+  async reviewExamAccessRequest(id: string, status: ExamAccessRequestStatus.APPROVED | ExamAccessRequestStatus.REJECTED, teacherId: string) {
+    const request = await this.accessRequestModel.findOne({ id }).exec();
+    if (!request) throw new NotFoundException('Solicitud no encontrada');
+    if (request.status !== ExamAccessRequestStatus.PENDING) throw new BadRequestException('La solicitud ya fue revisada');
+    const assigned = await this.groupModel.exists({ users: { $all: [teacherId, request.studentId] }, exams: request.examId });
+    if (!assigned) throw new ForbiddenException('No puedes revisar esta solicitud');
+    const exam = await this.examModel.findOne({ id: request.examId }).exec();
+    if (!exam) throw new NotFoundException('Examen no encontrado');
+    if (status === ExamAccessRequestStatus.APPROVED && exam.availableUntil && new Date() > exam.availableUntil) {
+      throw new BadRequestException('No se puede autorizar una oportunidad después de la fecha límite del examen');
+    }
+    request.status = status;
+    request.reviewedBy = teacherId;
+    request.reviewedAt = new Date();
+    if (status === ExamAccessRequestStatus.APPROVED) {
+      const oneDayFromApproval = new Date(request.reviewedAt.getTime() + 24 * 60 * 60 * 1000);
+      request.expiresAt = exam.availableUntil && exam.availableUntil < oneDayFromApproval
+        ? exam.availableUntil
+        : oneDayFromApproval;
+    }
+    return request.save();
+  }
+
+  private async recordExpiredAdditionalAttempt(examId: string, studentId: string, request: ExamAccessRequestDocument): Promise<void> {
+    request.attemptUsed = true;
+    await Promise.all([
+      request.save(),
+      new this.progressModel({
+        userId: studentId,
+        type: ProgressType.EXAM,
+        referenceId: examId,
+        answers: [],
+        score: 0,
+        feedback: 'La oportunidad adicional venció sin entregar el examen.',
+        gradedAt: new Date(),
+      }).save(),
+    ]);
+  }
+
   async getStudentExamResults(studentId: string, teacherId: string) {
     const groups = await this.groupModel.find({
       users: { $all: [teacherId, studentId] },
     }).select('id exams').exec();
-    const examIds = [...new Set(groups.flatMap((group) => group.exams))];
+    const examIds = [...new Set(
+      groups.flatMap((group) => Array.isArray(group.exams) ? group.exams : [])
+        .filter((examId): examId is string => typeof examId === 'string'),
+    )];
+    if (examIds.length === 0) {
+      return [];
+    }
+    const expiredRequests = await this.accessRequestModel.find({
+      examId: { $in: examIds },
+      studentId,
+      status: ExamAccessRequestStatus.APPROVED,
+      attemptUsed: false,
+      expiresAt: { $lte: new Date() },
+    }).exec();
+    await Promise.all(expiredRequests.map((request) =>
+      this.recordExpiredAdditionalAttempt(request.examId, studentId, request),
+    ));
     const submissions = await this.progressModel.find({
       type: ProgressType.EXAM,
       userId: studentId,
@@ -89,15 +232,18 @@ export class ProgressService {
     }).sort({ createdAt: -1 }).exec();
     const latestByExam = new Map<string, Progress>();
     for (const submission of submissions) {
-      if (!latestByExam.has(submission.referenceId)) {
-        latestByExam.set(submission.referenceId, submission);
+      const referenceId = Array.isArray(submission.referenceId)
+        ? submission.referenceId[0]
+        : submission.referenceId;
+      if (typeof referenceId === 'string' && examIds.includes(referenceId) && !latestByExam.has(referenceId)) {
+        latestByExam.set(referenceId, submission);
       }
     }
-    const exams = await this.examModel.find({ id: { $in: [...latestByExam.keys()] } }).exec();
+    const exams = await this.examModel.find({ id: { $in: examIds } }).exec();
     return exams.map((exam) => ({
-      groupId: groups.find((group) => group.exams.includes(exam.id))?.id,
+      groupId: groups.find((group) => Array.isArray(group.exams) && group.exams.includes(exam.id))?.id,
       exam,
-      submission: latestByExam.get(exam.id),
+      submission: latestByExam.get(exam.id) ?? null,
     }));
   }
 
@@ -107,19 +253,32 @@ export class ProgressService {
       throw new NotFoundException(`Exam submission with ID "${id}" not found`);
     }
 
+    const examId = Array.isArray(progress.referenceId) ? progress.referenceId[0] : progress.referenceId;
+
     if (teacherId) {
       const group = await this.groupModel.exists({
         users: { $all: [teacherId, progress.userId] },
-        exams: progress.referenceId,
+        exams: examId,
       });
       if (!group) {
         throw new ForbiddenException('No puedes calificar esta entrega');
       }
     }
 
+    const exam = await this.examModel.findOne({ id: examId }).exec();
+    if (!exam) {
+      throw new NotFoundException('Examen no encontrado');
+    }
+
     const gradedAnswers = progress.answers.map((answer) => {
+      const question = exam.questions.find((item) => String(item.id) === String(answer.questionId));
       const evaluation = answers.find((item) => item.questionId === answer.questionId);
-      return { ...answer, isCorrect: evaluation?.isCorrect === true };
+      const isCorrect = question?.type === 'single'
+        ? answer.answer === question.correctAnswers
+        : question?.type === 'multiple'
+          ? this.haveSameAnswers(answer.answers, question.correctAnswers)
+          : evaluation?.isCorrect === true;
+      return { ...answer, isCorrect };
     });
     progress.answers = gradedAnswers;
     const correctAnswers = gradedAnswers.filter((answer) => answer.isCorrect).length;
@@ -130,6 +289,12 @@ export class ProgressService {
     progress.gradedBy = graderId;
     progress.gradedAt = new Date();
     return progress.save();
+  }
+
+  private haveSameAnswers(answer: unknown, expected: unknown): boolean {
+    const submitted = Array.isArray(answer) ? answer.map(String).sort() : [];
+    const correct = Array.isArray(expected) ? expected.map(String).sort() : [];
+    return submitted.length === correct.length && submitted.every((value, index) => value === correct[index]);
   }
 
   // Obtener todos los progresos

@@ -6,6 +6,7 @@ import { Progress, ProgressSchema } from './schemas/progress.schema';
 import { Groups, GroupsSchema } from 'src/groups/schemas/groups.schema';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
 import { Exams, ExamsSchema } from 'src/exam/schemas/exams.schema';
+import { ExamAccessRequest, ExamAccessRequestSchema } from './schemas/exam-access-request.schema';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { Exams, ExamsSchema } from 'src/exam/schemas/exams.schema';
       { name: Groups.name, schema: GroupsSchema },
       { name: User.name, schema: UserSchema },
       { name: Exams.name, schema: ExamsSchema },
+      { name: ExamAccessRequest.name, schema: ExamAccessRequestSchema },
     ]),
   ],
   controllers: [ProgressController],

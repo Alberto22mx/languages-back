@@ -9,11 +9,13 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  NotFoundException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ProgressService } from './progress.service';
-import { CreateProgressDto, GradeExamProgressDto } from './dto/progress.dto';
+import { CreateProgressDto, GradeExamProgressDto, RequestExamAccessDto } from './dto/progress.dto';
 import { Progress } from './schemas/progress.schema';
+import { ExamAccessRequestStatus } from './schemas/exam-access-request.schema';
 import { Roles } from '../decorators/roles.decorator';
 import { UserRole } from '../auth/user-role.enum';
 
@@ -61,6 +63,41 @@ export class ProgressController {
     @Req() request: AuthenticatedRequest,
   ): Promise<Progress | null> {
     return this.progressService.getStudentExamStatus(examId, request.user.userId);
+  }
+
+  @Get('exam-access/:examId')
+  @Roles(UserRole.STUDENT)
+  getExamAccess(@Param('examId') examId: string, @Req() request: AuthenticatedRequest) {
+    return this.progressService.getExamAccess(examId, request.user.userId);
+  }
+
+  @Post('exam-access/:examId/request')
+  @Roles(UserRole.STUDENT)
+  requestExamAccess(
+    @Param('examId') examId: string,
+    @Body() dto: RequestExamAccessDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.progressService.requestExamAccess(examId, request.user.userId, dto.reason);
+  }
+
+  @Get('exam-access-requests')
+  @Roles(UserRole.TEACHER)
+  getExamAccessRequests(@Req() request: AuthenticatedRequest): Promise<any[]> {
+    return this.progressService.getExamAccessRequests(request.user.userId);
+  }
+
+  @Put('exam-access-requests/:id/:decision')
+  @Roles(UserRole.TEACHER)
+  reviewExamAccessRequest(
+    @Param('id') id: string,
+    @Param('decision') decision: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    if (decision !== ExamAccessRequestStatus.APPROVED && decision !== ExamAccessRequestStatus.REJECTED) {
+      throw new NotFoundException('Decisión no válida');
+    }
+    return this.progressService.reviewExamAccessRequest(id, decision, request.user.userId);
   }
 
   @Get('student-exam-results/:studentId')
