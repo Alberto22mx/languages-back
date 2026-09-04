@@ -1,20 +1,34 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateLessonDto {
   @IsOptional()
   @IsString()
-  id: string;
+  id?: string;
+
+  @IsNotEmpty()
   @IsString()
   @MaxLength(200)
   title: string;
+
+  @IsNotEmpty()
   @IsString()
   instructions: string;
+
   @IsOptional()
   @IsString()
   content?: string;
-  @IsString()
-  active: string;
+
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean;
+
   @IsOptional()
   @IsString()
-  image: string;
+  image?: string;
 }

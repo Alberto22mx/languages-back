@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Games, GamesDocument } from './schemas/games.schema';
+import { GameType, Games, GamesDocument } from './schemas/games.schema';
 import { CreateGamesDto } from './dto/create-games.dto';
 import { UpdateGameDto } from './dto/update-games.dto';
 
@@ -19,9 +19,14 @@ export class GamesService {
     return this.gameModel.findOne({ id }).exec();
   }
 
-  async create(createLessonDto: CreateGamesDto): Promise<Games> {
-    const lesson = new this.gameModel(createLessonDto);
-    return lesson.save();
+  async create(createGameDto: CreateGamesDto): Promise<Games> {
+    const game = new this.gameModel({
+      active: false,
+      data: [],
+      type: GameType.WORDSEARCH,
+      ...createGameDto,
+    });
+    return game.save();
   }
 
   async updateGame(
@@ -29,7 +34,10 @@ export class GamesService {
     updateGameDto: UpdateGameDto,
   ): Promise<GamesDocument> {
     const updatedUser = await this.gameModel
-      .findOneAndUpdate({ id }, updateGameDto, { new: true })
+      .findOneAndUpdate({ id }, updateGameDto, {
+        new: true,
+        runValidators: true,
+      })
       .exec();
 
     if (!updatedUser) {

@@ -1,19 +1,35 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateExamDto {
   @IsOptional()
   @IsString()
-  id: string;
+  id?: string;
+
+  @IsNotEmpty()
   @IsString()
   @MaxLength(200)
   title: string;
+
+  @IsNotEmpty()
   @IsString()
   instructions: string;
+
+  @IsOptional()
   @IsBoolean()
-  active: boolean;
+  active?: boolean;
+
   @IsOptional()
   @IsString()
-  image: string;
-  @IsString()
-  questions: string;
+  image?: string;
+
+  @IsOptional()
+  @IsArray()
+  questions?: any[];
 }

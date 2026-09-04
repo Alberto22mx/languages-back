@@ -27,7 +27,11 @@ export class ExamService {
   }
 
   async create(createExamDto: CreateExamDto): Promise<Exams> {
-    const exam = new this.examModel(createExamDto);
+    const exam = new this.examModel({
+      active: false,
+      questions: [],
+      ...createExamDto,
+    });
     return exam.save();
   }
 
@@ -36,7 +40,10 @@ export class ExamService {
     updateExamDto: UpdateExamDto,
   ): Promise<ExamsDocument> {
     const updatedExam = await this.examModel
-      .findOneAndUpdate({ id }, updateExamDto, { new: true })
+      .findOneAndUpdate({ id }, updateExamDto, {
+        new: true,
+        runValidators: true,
+      })
       .exec();
 
     if (!updatedExam) {

@@ -1,7 +1,9 @@
 import { GameType } from '../schemas/games.schema';
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
@@ -10,22 +12,34 @@ import {
 export class CreateGamesDto {
   @IsOptional()
   @IsString()
-  id: string;
+  id?: string;
+
+  @IsNotEmpty()
   @IsString()
   @MaxLength(200)
   title: string;
+
+  @IsNotEmpty()
   @IsString()
   instructions: string;
-  @IsString()
-  active: string;
+
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean;
+
   @IsOptional()
   @IsString()
-  image: string;
+  image?: string;
+
+  @IsOptional()
   @IsString()
-  url: string;
+  url?: string;
+
   @IsOptional()
   @IsArray()
   data?: any[];
+
+  @IsOptional()
   @IsEnum(GameType)
-  type: GameType;
+  type?: GameType;
 }

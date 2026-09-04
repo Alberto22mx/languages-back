@@ -27,7 +27,11 @@ export class LessonsService {
   }
 
   async create(createLessonDto: CreateLessonDto): Promise<Lessons> {
-    const lesson = new this.lessonModel(createLessonDto);
+    const lesson = new this.lessonModel({
+      content: '',
+      active: false,
+      ...createLessonDto,
+    });
     return lesson.save();
   }
 
@@ -36,7 +40,10 @@ export class LessonsService {
     updateLessonDto: UpdateLessonDto,
   ): Promise<LessonsDocument> {
     const updatedUser = await this.lessonModel
-      .findOneAndUpdate({ id }, updateLessonDto, { new: true })
+      .findOneAndUpdate({ id }, updateLessonDto, {
+        new: true,
+        runValidators: true,
+      })
       .exec();
 
     if (!updatedUser) {
