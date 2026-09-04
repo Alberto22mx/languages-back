@@ -1,14 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Lessons, LessonsDocument } from './schemas/lessons.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { UpdateLessonDto } from './dto/update-lessons.dto';
 import { CreateLessonDto } from './dto/create-lessons.dto';
+import { Groups, GroupsDocument } from '../groups/schemas/groups.schema';
 
 @Injectable()
 export class LessonsService {
   constructor(
     @InjectModel(Lessons.name) private lessonModel: Model<LessonsDocument>,
+    @InjectModel(Groups.name) private groupModel: Model<GroupsDocument>,
   ) {}
 
   async findAll(): Promise<Lessons[]> {
@@ -30,6 +32,13 @@ export class LessonsService {
       .exec();
   }
 
+  async findForTeacher(teacherId: string): Promise<Lessons[]> {
+    const groups = await this.groupModel.find({ users: teacherId }).select('lessons').exec();
+    const lessonIds = [...new Set(groups.flatMap((group) => group.lessons))];
+
+    return this.findMany(lessonIds);
+  }
+
   async create(createLessonDto: CreateLessonDto): Promise<Lessons> {
     const lesson = new this.lessonModel({
       content: '',
@@ -42,7 +51,19 @@ export class LessonsService {
   async updateUser(
     id: string,
     updateLessonDto: UpdateLessonDto,
+    teacherId?: string,
   ): Promise<LessonsDocument> {
+    if (teacherId) {
+      const isAssignedLesson = await this.groupModel.exists({
+        users: teacherId,
+        lessons: id,
+      });
+
+      if (!isAssignedLesson) {
+        throw new ForbiddenException('No puedes editar una lección que no pertenece a tus grupos');
+      }
+    }
+
     const updatedUser = await this.lessonModel
       .findOneAndUpdate({ id }, updateLessonDto, {
         new: true,
