@@ -30,6 +30,18 @@ export class Progress {
 
   @Prop({ type: [Object], required: true, default: [] })
   answers: any[];
+
+  @Prop({ min: 0, max: 100 })
+  score?: number;
+
+  @Prop({ trim: true, maxlength: 2000 })
+  feedback?: string;
+
+  @Prop()
+  gradedBy?: string;
+
+  @Prop()
+  gradedAt?: Date;
 }
 
 export const ProgressSchema = SchemaFactory.createForClass(Progress);

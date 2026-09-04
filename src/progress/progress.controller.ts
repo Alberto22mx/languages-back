@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ProgressService } from './progress.service';
-import { CreateProgressDto } from './dto/progress.dto';
+import { CreateProgressDto, GradeExamProgressDto } from './dto/progress.dto';
 import { Progress } from './schemas/progress.schema';
 import { Roles } from '../decorators/roles.decorator';
 import { UserRole } from '../auth/user-role.enum';
@@ -25,6 +25,7 @@ type AuthenticatedRequest = Request & {
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
   @Post()
+  @Roles(UserRole.STUDENT)
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() createProgressDto: CreateProgressDto,
@@ -40,6 +41,26 @@ export class ProgressController {
   @Roles(UserRole.ADMIN, UserRole.TEACHER)
   findAll(): Promise<Progress[]> {
     return this.progressService.findAll();
+  }
+
+  @Get('exam-results/:groupId/:examId')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  getExamResults(
+    @Param('groupId') groupId: string,
+    @Param('examId') examId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const teacherId = request.user.userType === UserRole.TEACHER ? request.user.userId : undefined;
+    return this.progressService.getExamResults(groupId, examId, teacherId);
+  }
+
+  @Get('exam-status/:examId')
+  @Roles(UserRole.STUDENT)
+  getStudentExamStatus(
+    @Param('examId') examId: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<Progress | null> {
+    return this.progressService.getStudentExamStatus(examId, request.user.userId);
   }
 
   @Get(':id')
@@ -68,6 +89,23 @@ export class ProgressController {
       id,
       { ...updateProgressDto, userId: owner ?? updateProgressDto.userId },
       owner,
+    );
+  }
+
+  @Put(':id/grade')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  gradeExam(
+    @Param('id') id: string,
+    @Body() gradeDto: GradeExamProgressDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<Progress> {
+    const teacherId = request.user.userType === UserRole.TEACHER ? request.user.userId : undefined;
+    return this.progressService.gradeExam(
+      id,
+      gradeDto.score,
+      gradeDto.feedback,
+      request.user.userId,
+      teacherId,
     );
   }
 

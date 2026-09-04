@@ -1,14 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Exams, ExamsDocument } from './schemas/exams.schema';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
+import { Groups, GroupsDocument } from '../groups/schemas/groups.schema';
 
 @Injectable()
 export class ExamService {
   constructor(
     @InjectModel(Exams.name) private examModel: Model<ExamsDocument>,
+    @InjectModel(Groups.name) private groupModel: Model<GroupsDocument>,
   ) {}
 
   async findAll(): Promise<Exams[]> {
@@ -38,7 +40,17 @@ export class ExamService {
   async updateExam(
     id: string,
     updateExamDto: UpdateExamDto,
+    teacherId?: string,
   ): Promise<ExamsDocument> {
+    if (teacherId) {
+      const assignedGroup = await this.groupModel.exists({
+        users: teacherId,
+        exams: id,
+      });
+      if (!assignedGroup) {
+        throw new ForbiddenException('No puedes editar un examen que no pertenece a uno de tus grupos');
+      }
+    }
     const updatedExam = await this.examModel
       .findOneAndUpdate({ id }, updateExamDto, {
         new: true,

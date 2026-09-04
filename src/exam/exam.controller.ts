@@ -10,13 +10,19 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { ExamService } from './exam.service';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { Exams } from './schemas/exams.schema';
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { Roles } from '../decorators/roles.decorator';
 import { UserRole } from '../auth/user-role.enum';
+
+type AuthenticatedRequest = Request & {
+  user: { userId: string; userType: UserRole };
+};
 
 @Controller('exam')
 export class ExamController {
@@ -49,8 +55,10 @@ export class ExamController {
   async updateExam(
     @Param('id') id: string,
     @Body() updateExamDto: UpdateExamDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<Exams> {
-    return this.examService.updateExam(id, updateExamDto);
+    const teacherId = request.user.userType === UserRole.TEACHER ? request.user.userId : undefined;
+    return this.examService.updateExam(id, updateExamDto, teacherId);
   }
 
   @Delete(':id')
