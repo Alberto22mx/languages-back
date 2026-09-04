@@ -20,12 +20,17 @@ type AuthenticatedRequest = Request & { user: { mongoId: string } };
 @Controller('auth')
 export class AuthController {
   private readonly secureCookies: boolean;
+  private readonly sameSite: 'none' | 'strict';
 
   constructor(
     private readonly authService: AuthService,
     configService: ConfigService,
   ) {
     this.secureCookies = configService.get<string>('NODE_ENV') === 'production';
+    this.sameSite =
+      configService.get<string>('COOKIE_SAME_SITE') === 'none'
+        ? 'none'
+        : 'strict';
   }
 
   @Public()
@@ -95,7 +100,7 @@ export class AuthController {
     return {
       httpOnly: true,
       secure: this.secureCookies,
-      sameSite: 'strict' as const,
+      sameSite: this.sameSite,
       path: '/auth',
     };
   }
