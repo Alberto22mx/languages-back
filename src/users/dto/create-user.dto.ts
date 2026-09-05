@@ -40,8 +40,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(['active', 'inactive'])
   state?: string;
+  @IsOptional()
   @IsBoolean()
-  termsAccepted: boolean;
+  termsAccepted?: boolean;
   @IsEnum(UserType)
   userType: string;
   @IsOptional()
