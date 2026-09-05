@@ -11,6 +11,10 @@ import { Lessons, LessonsSchema } from 'src/lessons/schemas/lessons.schema';
 import { Games, GamesSchema } from 'src/games/schemas/games.schema';
 import { Exams, ExamsSchema } from 'src/exam/schemas/exams.schema';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
+import {
+  GroupEnrollment,
+  GroupEnrollmentSchema,
+} from './schemas/group-enrollment.schema';
 
 @Module({
   imports: [
@@ -21,6 +25,7 @@ import { User, UserSchema } from 'src/users/schemas/user.schema';
       { name: Games.name, schema: GamesSchema },
       { name: Exams.name, schema: ExamsSchema },
       { name: User.name, schema: UserSchema },
+      { name: GroupEnrollment.name, schema: GroupEnrollmentSchema },
     ]),
   ],
   controllers: [GroupsController],

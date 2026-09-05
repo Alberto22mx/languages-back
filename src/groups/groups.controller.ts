@@ -20,7 +20,9 @@ import { UserRole } from '../auth/user-role.enum';
 import { Req } from '@nestjs/common';
 import { Request } from 'express';
 
-type AuthenticatedRequest = Request & { user: { userId: string; userType: UserRole } };
+type AuthenticatedRequest = Request & {
+  user: { userId: string; userType: UserRole };
+};
 
 @Controller('groups')
 export class GroupsController {
@@ -42,6 +44,47 @@ export class GroupsController {
     return this.groupsService.getStudentsForTeacher(request.user.userId);
   }
 
+  @Get(':id/students')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  getActiveStudentIds(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<string[]> {
+    const teacherId =
+      request.user.userType === UserRole.TEACHER
+        ? request.user.userId
+        : undefined;
+    return this.groupsService.getActiveStudentIds(id, teacherId);
+  }
+
+  @Post(':id/students/:studentId/complete')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  completeStudent(
+    @Param('id') groupId: string,
+    @Param('studentId') studentId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const teacherId =
+      request.user.userType === UserRole.TEACHER
+        ? request.user.userId
+        : undefined;
+    return this.groupsService.completeStudent(groupId, studentId, teacherId);
+  }
+
+  @Post(':id/students/:studentId/withdraw')
+  @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  withdrawStudent(
+    @Param('id') groupId: string,
+    @Param('studentId') studentId: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    const teacherId =
+      request.user.userType === UserRole.TEACHER
+        ? request.user.userId
+        : undefined;
+    return this.groupsService.withdrawStudent(groupId, studentId, teacherId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Groups> {
     return this.groupsService.findOne(id);
@@ -56,6 +99,7 @@ export class GroupsController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.TEACHER)
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
   async updateGroup(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateGroupsDto,

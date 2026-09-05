@@ -33,6 +33,13 @@ export class CreateGroupsDto {
   @IsString()
   templateId?: string;
   @IsOptional()
+  @IsString()
+  teacherId?: string;
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  studentIds?: string[];
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   exams?: string[];

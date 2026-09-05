@@ -56,6 +56,9 @@ export class Groups extends Document {
   @Prop()
   image?: string;
 
+  @Prop({ type: String, ref: 'User' })
+  teacherId?: string;
+
   @Prop({ type: String, ref: 'CourseTemplate' })
   templateId?: string;
 
