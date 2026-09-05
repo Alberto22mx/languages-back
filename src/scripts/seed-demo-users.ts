@@ -29,7 +29,7 @@ async function seed() {
   );
   await GroupModel.findOneAndUpdate(
     { nameGroup: 'Grupo de prueba' },
-    { $setOnInsert: { id: uuidv4(), nameGroup: 'Grupo de prueba', course: 'Inglés', description: 'Grupo creado por el seeder de desarrollo', level: 'Basic', schedule: '8:00 AM - 9:00 AM', state: 'active', users: [teacher.id, student.id], lessons: [], exams: [], games: [] } },
+    { $setOnInsert: { id: uuidv4(), nameGroup: 'Grupo de prueba', course: 'Inglés', description: 'Grupo de prueba', level: 'Basic', schedule: '8:00 AM - 9:00 AM', state: 'active', users: [teacher.id, student.id], lessons: [], exams: [], games: [] } },
     { new: true, upsert: true },
   );
   console.log('Datos demo listos: TEA000001 y STU000001. Contraseña: DemoPassword123!');

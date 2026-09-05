@@ -22,9 +22,10 @@ export class GroupsService {
       .find({ users: userId }) // Busca por userId
       .populate({
         path: 'lessons',
-        select: 'id title instructions', // Incluye únicamente los campos seleccionados
+        select: 'id title instructions createdAt',
         localField: 'lessons',
         foreignField: 'id',
+        options: { sort: { createdAt: -1 } },
       })
       .populate({
         path: 'exams',
