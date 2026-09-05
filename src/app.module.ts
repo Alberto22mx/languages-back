@@ -16,6 +16,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { RolesGuard } from './auth/roles.guard';
 import { validateEnvironment } from './config/env.validation';
+import { CourseTemplatesModule } from './course-templates/course-templates.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { validateEnvironment } from './config/env.validation';
     ExamModule,
     ProgressModule,
     MailModule,
+    CourseTemplatesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -30,6 +30,9 @@ export class CreateGroupsDto {
   @IsString()
   description: string;
   @IsOptional()
+  @IsString()
+  templateId?: string;
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   exams?: string[];
