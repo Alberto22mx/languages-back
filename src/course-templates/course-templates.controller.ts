@@ -43,11 +43,6 @@ export class CourseTemplatesController {
     return this.courseTemplatesService.create(createCourseTemplateDto);
   }
 
-  @Post(':id/versions')
-  createNextVersion(@Param('id') id: string): Promise<CourseTemplate> {
-    return this.courseTemplatesService.createNextVersion(id);
-  }
-
   @Patch(':id')
   @UsePipes(new ValidationPipe({ transform: true }))
   update(

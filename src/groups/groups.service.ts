@@ -18,7 +18,6 @@ import {
   CourseTemplate,
   CourseTemplateDocument,
 } from '../course-templates/schemas/course-template.schema';
-import { CourseTemplateStatus } from '../course-templates/course-template-status.enum';
 
 @Injectable()
 export class GroupsService {
@@ -199,9 +198,9 @@ export class GroupsService {
     const template = await this.courseTemplateModel
       .findOne({ id: templateId })
       .exec();
-    if (!template || template.status !== CourseTemplateStatus.ACTIVE) {
+    if (!template) {
       throw new BadRequestException(
-        'La plantilla seleccionada no existe o no está activa',
+        'La plantilla seleccionada no existe',
       );
     }
     if (template.course !== course || template.level !== level) {

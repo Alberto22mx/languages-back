@@ -33,7 +33,10 @@ export class LessonsService {
   }
 
   async findForTeacher(teacherId: string): Promise<Lessons[]> {
-    const groups = await this.groupModel.find({ users: teacherId }).select('lessons').exec();
+    const groups = await this.groupModel
+      .find({ $or: [{ teacherId }, { users: teacherId }] })
+      .select('lessons')
+      .exec();
     const lessonIds = [...new Set(groups.flatMap((group) => group.lessons))];
 
     return this.findMany(lessonIds);
@@ -55,7 +58,7 @@ export class LessonsService {
   ): Promise<LessonsDocument> {
     if (teacherId) {
       const isAssignedLesson = await this.groupModel.exists({
-        users: teacherId,
+        $or: [{ teacherId }, { users: teacherId }],
         lessons: id,
       });
 

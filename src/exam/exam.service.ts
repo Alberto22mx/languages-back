@@ -44,7 +44,7 @@ export class ExamService {
   ): Promise<ExamsDocument> {
     if (teacherId) {
       const assignedGroup = await this.groupModel.exists({
-        users: teacherId,
+        $or: [{ teacherId }, { users: teacherId }],
         exams: id,
       });
       if (!assignedGroup) {

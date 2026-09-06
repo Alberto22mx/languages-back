@@ -9,7 +9,6 @@ import { Model } from 'mongoose';
 import { Exams, ExamsDocument } from '../exam/schemas/exams.schema';
 import { Lessons, LessonsDocument } from '../lessons/schemas/lessons.schema';
 import { Groups, GroupsDocument } from '../groups/schemas/groups.schema';
-import { CourseTemplateStatus } from './course-template-status.enum';
 import { CreateCourseTemplateDto } from './dto/create-course-template.dto';
 import { UpdateCourseTemplateDto } from './dto/update-course-template.dto';
 import {
@@ -71,24 +70,6 @@ export class CourseTemplatesService {
     const lessons = updateCourseTemplateDto.lessons ?? template.lessons;
     const exams = updateCourseTemplateDto.exams ?? template.exams;
 
-    if (await this.isTemplateInUse(id)) {
-      const changesCurriculum =
-        (updateCourseTemplateDto.course !== undefined &&
-          updateCourseTemplateDto.course !== template.course) ||
-        (updateCourseTemplateDto.level !== undefined &&
-          updateCourseTemplateDto.level !== template.level) ||
-        (updateCourseTemplateDto.version !== undefined &&
-          updateCourseTemplateDto.version !== template.version) ||
-        !this.sameReferences(lessons, template.lessons) ||
-        !this.sameReferences(exams, template.exams);
-
-      if (changesCurriculum) {
-        throw new ConflictException(
-          'Esta plantilla ya está asignada a grupos. Crea una nueva versión para cambiar su contenido.',
-        );
-      }
-    }
-
     await this.validateContentReferences(lessons, exams);
     await this.ensureVersionIsAvailable(
       updateCourseTemplateDto.course ?? template.course,
@@ -106,38 +87,31 @@ export class CourseTemplatesService {
 
     if (!updatedTemplate)
       throw new NotFoundException('Plantilla de curso no encontrada');
+
+    // Los grupos vinculados deben reflejar de inmediato el contenido editado.
+    await this.groupModel
+      .updateMany(
+        { templateId: id },
+        {
+          lessons: updatedTemplate.lessons,
+          exams: updatedTemplate.exams,
+          templateVersion: updatedTemplate.version,
+        },
+      )
+      .exec();
+
     return updatedTemplate;
   }
 
-  async createNextVersion(id: string): Promise<CourseTemplate> {
-    const sourceTemplate = await this.findOne(id);
-    const latestTemplate = await this.courseTemplateModel
-      .findOne({ course: sourceTemplate.course, level: sourceTemplate.level })
-      .sort({ version: -1 })
-      .select('version')
-      .exec();
-    const nextVersion = (latestTemplate?.version ?? sourceTemplate.version) + 1;
-
-    const nextTemplate = await new this.courseTemplateModel({
-      name: sourceTemplate.name,
-      course: sourceTemplate.course,
-      level: sourceTemplate.level,
-      version: nextVersion,
-      status: CourseTemplateStatus.ACTIVE,
-      lessons: [...sourceTemplate.lessons],
-      exams: [...sourceTemplate.exams],
-      previousTemplateId: sourceTemplate.id,
-    }).save();
-
-    await this.courseTemplateModel.updateOne(
-      { id: sourceTemplate.id },
-      { status: CourseTemplateStatus.ARCHIVED },
-    );
-
-    return nextTemplate;
-  }
-
   async remove(id: string): Promise<void> {
+    // Se conserva el contenido ya copiado en cada grupo, pero se elimina el vínculo.
+    await this.groupModel
+      .updateMany(
+        { templateId: id },
+        { $unset: { templateId: 1, templateVersion: 1 } },
+      )
+      .exec();
+
     const result = await this.courseTemplateModel.deleteOne({ id }).exec();
     if (result.deletedCount === 0)
       throw new NotFoundException('Plantilla de curso no encontrada');
@@ -157,17 +131,6 @@ export class CourseTemplatesService {
         'La plantilla contiene lecciones o exámenes inexistentes',
       );
     }
-  }
-
-  private async isTemplateInUse(templateId: string): Promise<boolean> {
-    return !!(await this.groupModel.exists({ templateId }));
-  }
-
-  private sameReferences(first: string[], second: string[]): boolean {
-    return (
-      first.length === second.length &&
-      first.every((id, index) => id === second[index])
-    );
   }
 
   private async ensureVersionIsAvailable(
